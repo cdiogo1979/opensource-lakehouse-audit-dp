@@ -62,7 +62,7 @@ Manual steps: 1 to 7, 9, 10, 12, 13. Automated once merged: Airflow bundle refre
 ### 8. (automatic) View deploy in UAT
 Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_views` task, which creates the five views in `audit_lhuat` as the writer. A view whose source table doesn't exist yet is skipped until a later run, so the views appear after the first silver run.
 
-### 9. Create the UAT bronze table
+### 9. Create the UAT bronze table — DONE 2026-11-25 (run `manual__2026-11-25T18:54:34`, result `created`)
 - **Execution**: trigger `audit-uat-starrocks_deploy`.
 - **Validation**: the task logs `"result": "created"`, and the table exists in `lakehouse_uat.audit_lhuat`.
 

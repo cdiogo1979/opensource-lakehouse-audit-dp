@@ -12,7 +12,8 @@ Intent `20261125-starrocks-query-audit`, branch `starrocks-query-audit`, 2026-11
 | Extras lock check | `requirements.txt` | PASS, no requirements |
 | Python 3.10 | platform image, Python 3.10.12: parse, import, redaction | PASS |
 | Spark smoke | `scripts/spark_smoke_starrocks.py` in `local/lakehouse-spark-runtime:3.5.9_1.10.2`, no network | PASS (details below) |
-| Platform integration (dev, views, access, UAT) | needs the paired platform intent | NOT RUN: blocked |
+| Platform integration: bronze deploy in UAT | `audit-uat-starrocks_deploy`, run `manual__2026-11-25T18:54:34`, as `srv-audit-writer` through Polaris | PASS (2026-11-25): `created` `lakehouse_uat.audit_lhuat.starrocks_audit_event_fe_brz` at `s3a://bucket-audit-uat/lakehouse_uat/audit_lhuat/starrocks_audit_event_fe_brz` |
+| Platform integration: bronze pull, silver, views, access, dev | needs the paired platform intent | NOT RUN: blocked |
 | Performance | not required; watch points listed | N/A |
 
 ### Spark smoke details
