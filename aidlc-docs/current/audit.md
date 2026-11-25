@@ -337,3 +337,13 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Deploy Follow-up — audit.yaml already applied
+**Timestamp**: 2026-11-25T22:40:00Z
+**User Input**: "audit yaml was already executed"
+**AI Response**: "Checked the platform state: .runtime/state/data-products/audit.json applied_at 2026-11-25T18:29:16Z, before the analyst change to audit.yaml (file modified 18:32), so analysts currently have read on the prod namespace audit_lh. A dry run validated the file as a re-apply but needs the admin password, which the AI did not fetch; the user is to re-apply with scripts/operations/create-data-product.sh data-products/audit.yaml. Updated deploy_instructions.md step 1 and blockers, and pr_request.md (branch pushed; re-apply risk). Pushed the doc update to the PR branch."
+**Context**: Deploy handoff follow-up; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---

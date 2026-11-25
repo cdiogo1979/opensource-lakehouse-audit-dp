@@ -1,6 +1,6 @@
 # PR request: StarRocks query audit (audit data product, first source)
 
-Proposed pull request: `starrocks-query-audit` into `uat`, then `uat` into `main`. Intent `20261125-starrocks-query-audit`. Not yet pushed or opened.
+Pull request: `starrocks-query-audit` into `uat`, then `uat` into `main`. Intent `20261125-starrocks-query-audit`. Branch pushed 2026-11-25; the pull request is opened from GitHub's compare page.
 
 ## Problem
 The lakehouse has no record of what is done to its data. This repository becomes the **audit data product**: one subproject per audited source, starting with StarRocks. Every query, login and platform action executed in the shared StarRocks instance should be queryable as Iceberg tables within about an hour and kept indefinitely. Full SQL should go only to the product's owners and developers. Analysts get masked, aggregated views.
@@ -53,7 +53,7 @@ Details: `aidlc-docs/current/construction/build-and-test/build-and-test-summary.
 Ordered steps are required: platform prerequisites first, then dev, UAT and production. See [deploy_instructions.md](deploy_instructions.md). CI deploys nothing. Airflow picks up the merged branches through the `audit-uat` and `audit-main` bundles, and the platform deploys the views with each bundle run.
 
 ## Risks and limitations
-- **Depends on the paired platform intent:** `audit.yaml` applied; the AuditLoader plugin and 7-day staging table; `SELECT` on it for `srv-audit-writer` and the audit owner and developer roles; `lakehouse_starrocks.connect()`; StarRocks reachable with its CA from Spark runs and Jupyter. Until those exist, the bronze task fails at connect, and nothing reaches silver.
+- **Depends on the paired platform intent:** `audit.yaml` was applied at 2026-11-25T18:29Z, before analysts were set to `none` on the prod namespace, so it must be **re-applied** (analysts currently have `read` on `audit_lh`); the AuditLoader plugin and 7-day staging table; `SELECT` on it for `srv-audit-writer` and the audit owner and developer roles; `lakehouse_starrocks.connect()`; StarRocks reachable with its CA from Spark runs and Jupyter. Until those exist, the bronze task fails at connect, and nothing reaches silver.
 - **Open probes (P-1):**
   - whether AuditLoader on StarRocks 4.1.7 records connection events (if not, `mv_starrocks_login_day` stays empty);
   - the staging columns;

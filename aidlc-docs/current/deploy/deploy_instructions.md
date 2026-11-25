@@ -6,7 +6,9 @@ Manual steps: 1 to 7, 9, 10, 12, 13. Automated once merged: Airflow bundle refre
 
 ## Platform prerequisites (repository `opensource-lakehouse-infra`, paired intent)
 
-### 1. Apply the audit data product
+### 1. Apply the audit data product — APPLIED 2026-11-25T18:29Z, RE-APPLY NEEDED
+**Status**: applied (`.runtime/state/data-products/audit.json`, `applied_at` 2026-11-25T18:29:16Z) from the file as it was then, with `access.analyst.prod: read`. The file was changed at 18:32 to `none` (FR-6.2), so analysts can currently read `lakehouse.audit_lh`, including full SQL text once data arrives. **Re-apply before any prod data is loaded** (step 12): `scripts/operations/create-data-product.sh data-products/audit.yaml --dry-run`, then without `--dry-run` (needs the platform admin password). The `repo` block is unchanged, so no Airflow restart is expected; confirm in the dry run. A dry-run validation without the password reported "file valid (re-apply)".
+
 - **Action and target**: apply `data-products/audit.yaml`: groups `role-audit-*`, namespaces `audit_lh`/`audit_lhuat`/`audit_lhdev`, buckets, MV databases, writer `srv-audit-writer`, Airflow bundles `audit-main`/`audit-uat`, Jenkins folder `audit`.
 - **Prerequisites**: platform admin. Check that the file keeps `access.analyst.prod: none` (FR-6.2). Applying a product with a `repo` block recreates the Airflow containers, so pick a time with no running DAG runs, or use `--no-restart` and later `scripts/lakehouse.sh start-airflow`.
 - **Execution**: `scripts/operations/create-data-product.sh data-products/audit.yaml` (add `--no-restart` to defer the Airflow restart), then commit the file in the platform repository.
@@ -91,8 +93,8 @@ Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_
 ## Inputs needed and blockers
 | Item | Owner | Status |
 |---|---|---|
-| Paired platform intent: steps 1 to 4 | platform admin | Not started (blocker) |
+| Paired platform intent: steps 2 to 4 (step 1 applied, re-apply pending) | platform admin | Not started (blocker) |
 | Probe P-1: AuditLoader columns, connection events, FE time zone | platform admin | Open |
 | Airflow's pause default for new DAGs | platform admin | Unknown |
-| Time window for step 1 (Airflow restart) | platform admin | Needed |
-| Approval to push the branch and open the PR (step 5) | you | Pending |
+| Re-apply `audit.yaml` (analysts `none` on prod) | platform admin | Needed before step 12 |
+| Step 5: branch pushed 2026-11-25; PR opened from the compare page | you | Branch pushed |
