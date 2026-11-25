@@ -357,3 +357,13 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Deploy Follow-up — uat DAGs live, hourly load paused
+**Timestamp**: 2026-11-25T23:00:00Z
+**User Input**: "i paused the dag"
+**AI Response**: "Confirmed in Airflow: audit-uat-starrocks_audit paused=True; audit-uat-starrocks_deploy and audit-uat-deploy_materialized_views unpaused (bundle version 3935df5). The hourly load stays paused until the paired platform intent delivers the AuditLoader staging table, grants, lakehouse_starrocks.connect() and connectivity."
+**Context**: Deploy follow-up; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
