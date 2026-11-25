@@ -96,5 +96,5 @@ Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_
 | Paired platform intent: steps 2 to 4 (step 1 applied, re-apply pending) | platform admin | Not started (blocker) |
 | Probe P-1: AuditLoader columns, connection events, FE time zone | platform admin | Open |
 | Airflow's pause default for new DAGs | platform admin | Unknown |
-| Re-apply `audit.yaml` (analysts `none` on prod) | platform admin | Needed before step 12 |
-| Step 5: branch pushed 2026-11-25; PR opened from the compare page | you | Branch pushed |
+| Step 5: branch pushed; PR #1 merged into `uat` 2026-11-25 (`3935df5`), before dev validation (step 6, still to do before `main`) | you | Done |
+| Re-apply of `audit.yaml` (analysts `none` on prod) | platform admin | Done 2026-11-25 (user) |

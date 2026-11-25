@@ -347,3 +347,13 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Deploy Follow-up — re-apply and merge to uat
+**Timestamp**: 2026-11-25T22:50:00Z
+**User Input**: "i re-executed the audit yml but is waiting for the dag audit bundles" / "merged to uar"
+**AI Response**: "Confirmed Airflow restarted and registered the audit-main and audit-uat bundles (0 DAGs, 0 errors) while both branches only held workflows/.gitkeep. The user merged PR #1 into uat (3935df5); waiting for the bundle refresh to show audit-uat-starrocks_deploy and audit-uat-starrocks_audit. Advised keeping audit-uat-starrocks_audit paused until the paired platform intent delivers lakehouse_starrocks.connect() and the AuditLoader staging table; audit-uat-starrocks_deploy is safe to run. Dev validation (deploy step 6) skipped by the merge; remains to be done before main."
+**Context**: Deploy follow-up; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
