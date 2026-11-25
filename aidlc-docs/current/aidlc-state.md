@@ -40,7 +40,7 @@
 
 ### CONSTRUCTION PHASE
 - [x] Unit 1 `repo-identity`: Code Generation — approved 2026-11-25; commit `dd99258` on `main` and `uat`
-- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation approved 2026-11-25 (including the pull-model change request)
+- [x] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation approved 2026-11-25 (including the pull-model change request)
 - [x] NFR Requirements, NFR Design, Infrastructure Design — SKIPPED
 - [ ] Build and Test — local verification PASS (unit 260, code quality, validator, Python 3.10, Spark smoke); platform integration blocked by the paired intent; awaiting approval
 
