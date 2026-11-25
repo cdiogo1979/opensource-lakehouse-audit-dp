@@ -4,17 +4,16 @@
 # This Jupytext `py:percent` notebook creates the bronze table
 # `starrocks_audit_event_fe_brz` in the environment's namespace, at
 # `<storage_path>/<catalog_name>/<database_name>/starrocks_audit_event_fe_brz`.
-# The table is the contract with the lakehouse platform: an hourly StarRocks task
-# copies the last 2 hours of StarRocks audit rows into it (prod and uat), with the
-# columns `query_id`, `event_time` (UTC), `payload` (the audit row as JSON, credentials
-# redacted), `copied_at` and `copy_task`. It is an Iceberg table, format-version 2,
-# written as Parquet (StarRocks writes only Parquet Iceberg tables), partitioned by
-# day of `event_time`, and append-only; nothing deletes its rows.
+# `bronze/bronze_ingestion.py` appends the StarRocks audit rows to it every hour, with
+# the columns `query_id`, `event_time` (UTC), `payload` (the audit row as JSON,
+# credentials redacted), `copied_at` and `copy_task`. It is an Iceberg table,
+# format-version 2, written as Parquet, partitioned by day of `event_time`, and
+# append-only; nothing deletes its rows.
 #
 # Safe to re-run: an existing table with the expected columns is left alone; one
 # with other columns stops the run (it is never altered). Logs one JSON record.
 #
-# **Run it** once per environment before the platform's copy task is enabled:
+# **Run it** once per environment before the first bronze run:
 # in Airflow with the manual workflow `starrocks_deploy` (task
 # `starrocks_audit_event_fe_brz_create`, as the product writer) for uat and prod; in
 # Jupyter for dev (owners and developers can create tables there). No task arguments.

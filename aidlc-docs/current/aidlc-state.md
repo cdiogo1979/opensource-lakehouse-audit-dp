@@ -40,7 +40,7 @@
 
 ### CONSTRUCTION PHASE
 - [x] Unit 1 `repo-identity`: Code Generation — approved 2026-11-25; commit `dd99258` on `main` and `uat`
-- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation done (240 tests, all checks green, committed locally); awaiting approval
+- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation done; change request 2026-11-25 (pull model, dev pulls real data) applied: 260 tests, all checks green, committed locally; awaiting approval
 - [ ] NFR Requirements, NFR Design, Infrastructure Design — SKIP (planned)
 - [ ] Build and Test
 

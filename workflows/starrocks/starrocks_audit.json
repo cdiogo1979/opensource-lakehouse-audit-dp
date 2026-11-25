@@ -1,10 +1,11 @@
 {
   "apiVersion": "lakehouse.local/workflow/v1",
   "name": "starrocks_audit",
-  "description": "Hourly StarRocks audit load: streams the audit rows the platform copied into bronze (starrocks_audit_event_fe_brz, at minute 5) and merges them insert-only into silver starrocks_audit_event and starrocks_audit_table_access. Gold views refresh at minute 35.",
+  "description": "Hourly StarRocks audit load: bronze pulls the new audit rows from StarRocks' AuditLoader table into starrocks_audit_event_fe_brz (from the bronze watermark minus 30 minutes); silver then merges them insert-only into starrocks_audit_event and starrocks_audit_table_access. Gold views refresh at minute 35.",
   "schedule": "20 * * * *",
-  "tags": ["starrocks", "audit", "silver"],
+  "tags": ["starrocks", "audit", "bronze", "silver"],
   "tasks": [
-    {"name": "starrocks_audit_event_load", "entrypoint": "silver/silver_processing.py", "retries": 1, "retry_delay_seconds": 300, "execution_timeout_seconds": 2400}
+    {"name": "starrocks_audit_event_fe_brz_load", "entrypoint": "bronze/bronze_ingestion.py", "retries": 1, "retry_delay_seconds": 300, "execution_timeout_seconds": 1800},
+    {"name": "starrocks_audit_event_load", "entrypoint": "silver/silver_processing.py", "runs_after": ["starrocks_audit_event_fe_brz_load"], "retries": 1, "retry_delay_seconds": 300, "execution_timeout_seconds": 2400}
   ]
 }

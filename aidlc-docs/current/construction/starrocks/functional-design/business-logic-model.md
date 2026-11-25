@@ -5,7 +5,7 @@ Rules: [business-rules.md](business-rules.md). Entities: [domain-entities.md](do
 ## 1. End-to-end flow
 
 ```text
-staging row --(platform copy, redacts, hourly, 2h overlap)--> bronze AuditEventRaw
+staging row --(bronze_ingestion: watermark - lookback, redacts, hourly)--> bronze AuditEventRaw
 bronze --(silver_processing, availableNow stream)--> micro-batch
 micro-batch: parse payload -> enrich (audit_sql) -> dedupe by event_key
           -> MERGE insert-if-absent: starrocks_audit_event
@@ -61,6 +61,13 @@ Key lookup with BR-15's normalization; used for every silver column.
 
 The enrichment logic is one pure function, `enrich_payload(query_id, event_time, payload, copied_at, copy_task) -> dict`, so the whole row transformation is unit-tested without Spark; the notebook only maps it over the batch.
 
+## 3b. Bronze ingestion (C6, pull model 2026-11-25)
+1. Check `lookback_minutes` (BR-35); `start_spark_job("bronze_ingestion")`.
+2. `bronze_watermark`: `SELECT max(event_time)` from bronze (fails when bronze is missing).
+3. Open `lakehouse_starrocks.connect()`; run `pull_query(staging_table, watermark - lookback)`; `fetchmany(20000)` at a time.
+4. For each chunk: `staging_to_bronze` per row (redact, canonical JSON, UTC times), then `createDataFrame(...).writeTo(bronze).append()`.
+5. Close the connection (always); log watermark, start, rows, chunks, first and last event times.
+
 ## 4. Bronze deployment (C2)
 `ensure_bronze_table(spark, config)`: if the table is missing, `CREATE TABLE <catalog>.<db>.starrocks_audit_event_fe_brz (...) USING iceberg PARTITIONED BY (days(event_time)) LOCATION '<storage_path>/<catalog>/<db>/starrocks_audit_event_fe_brz' TBLPROPERTIES ('format-version'='2', 'write.format.default'='parquet')` and return `created`. If it exists, compare column names and types with `bronze_schema()`; return `exists` when equal, raise when not (never alters).
 
@@ -78,13 +85,15 @@ The enrichment logic is one pure function, `enrich_payload(query_id, event_time,
 | Spark or merge failure mid-run | Task fails; Airflow retries once after 300 s; the checkpoint replays the batch; insert-only merge prevents duplicates |
 | Lost or deleted checkpoint | Next run reprocesses all of bronze; insert-only merge prevents duplicates (slower run only) |
 | Run longer than 2400 s | Task times out and retries; the next hourly run continues from the checkpoint |
-| Platform copy missed hours | Covered by the 2-hour overlap if one run is missed; a longer gap is a platform catch-up (paired intent) |
+| Missed or failed bronze runs | The next run starts at the bronze watermark minus the lookback: gaps up to the staging table's 7 days are recovered (BR-35) |
+| StarRocks unreachable or login refused | The bronze task fails and retries once after 300 s; silver then processes nothing new; the next hourly run catches up |
 
 ## 7. Testable properties (PBT-01)
 Partial PBT is enforced (PBT-02, -03, -07, -08, -09). Framework: Hypothesis (PBT-09), with the fixed seed from `tests/workload_foundation/conftest.py` (PBT-08).
 
 | Component | Property | Category | Enforced rule |
 |---|---|---|---|
+| `staging_to_bronze` | The same staging row gives the same payload whatever its column order; no credential survives | Invariant | PBT-03 |
 | `tokenize` | Joining the tokens' text returns the input, for any text | Round-trip | PBT-02 |
 | `infer_scope` | For generated product tokens and environments, `infer_scope(catalog(env), database(token, env))` returns `(token, env)` | Round-trip | PBT-02 |
 | `event_key` | Equal for the same payload serialized with any key order and spacing (no `queryId`) | Invariant | PBT-03 |

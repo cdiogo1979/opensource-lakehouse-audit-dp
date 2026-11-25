@@ -63,6 +63,14 @@ Intent `20261125-starrocks-query-audit`. This plan is the single source of truth
 - [x] `# nosec B608` with a reason on the sample generator's four statement templates.
 - [x] Python 3.10 check run in the platform's Spark runtime image (no Python 3.10 on the host).
 
+### Step 14 — Change request 2026-11-25: pull model (DOC-02)
+- [x] `audit_sql.staging_to_bronze` and `STAGING_TABLE`.
+- [x] `notebooks/workload/starrocks/bronze/bronze_ingestion.py` (C6) and `tests/starrocks/test_bronze_ingestion.py` (19 tests); property test for `staging_to_bronze`.
+- [x] `starrocks_audit` runs `starrocks_audit_event_fe_brz_load`, then `starrocks_audit_event_load`; `starrocks_deploy` description; `starrocks_audit_table` in the three configs.
+- [x] Title cells of the deploy, silver and sample notebooks; README; AGENTS.md.
+- [x] Requirements, application design and functional design updated (DOC-01); stale-term sweep clean.
+- [x] Verification: code quality PASS, pytest 260 passed, validator OK (2 workflows, 5 views), Python 3.10 grammar check PASS (image check deferred: image removed).
+
 ## Traceability
 | Requirement / rule | Steps |
 |---|---|

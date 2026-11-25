@@ -1,6 +1,7 @@
 """Hypothesis properties of notebooks/common/audit_sql.py (functional design, Testable Properties; PBT-02, -03, -07, -08)."""
 
 import json
+from datetime import datetime
 import os
 import string
 
@@ -314,3 +315,24 @@ def test_deduplicate_is_idempotent_and_keeps_the_earliest(pairs):
     assert a.deduplicate(rows + rows, a.EVENT_KEY_COLUMNS, "first_copied_at") == once
     for row in once:
         assert row["first_copied_at"] == min(order for key, order in pairs if key == row["event_key"])
+
+
+staging_values = st.one_of(st.none(), st.integers(), st.text(max_size=12), st.booleans(), st.datetimes(min_value=datetime(2000, 1, 1), max_value=datetime(2100, 1, 1)))
+
+
+@seed(HYPOTHESIS_SEED)
+@PROPERTY
+@given(
+    st.dictionaries(st.from_regex(r"[a-zA-Z]{1,10}", fullmatch=True).filter(lambda k: k.lower() not in ("stmt", "timestamp", "queryid")), staging_values, max_size=8),
+    credential_statements(),
+    st.randoms(use_true_random=False),
+)
+def test_staging_to_bronze_is_order_independent_and_never_keeps_secrets(extra, statement, random):
+    sql, secret = statement
+    row = {"queryId": "q", "timestamp": datetime(2026, 11, 25, 10), "stmt": sql, **extra}
+    keys = list(row)
+    random.shuffle(keys)
+    first = a.staging_to_bronze(row, datetime(2026, 11, 25, 11), "bronze_ingestion")
+    second = a.staging_to_bronze({key: row[key] for key in keys}, datetime(2026, 11, 25, 12), "bronze_ingestion")
+    assert first[2] == second[2] and first[:2] == second[:2]
+    assert secret not in first[2]

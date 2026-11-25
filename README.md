@@ -72,8 +72,8 @@ Nothing in this repository holds a password, key, or token, and nothing should.
 ```text
 workflows/                 One JSON file per Airflow DAG (see the reference below), per subproject
   starrocks/                 subproject "starrocks" (StarRocks query audit; see Subprojects)
-    starrocks_audit.json       hourly (minute 20): bronze audit rows into the two silver tables
-    starrocks_deploy.json      manual: creates the bronze table the platform copies into
+    starrocks_audit.json       hourly (minute 20): StarRocks audit log into bronze, then the two silver tables
+    starrocks_deploy.json      manual: creates the bronze table
 dags/
   lakehouse.py             The platform stub: the only file allowed in dags/
 notebooks/
@@ -86,9 +86,10 @@ notebooks/
                              literal masking, statement categories, actors, product scope, table names
   workload/                Spark jobs (Jupytext py:percent files, also notebooks), per subproject
     starrocks/               the entry points of workflows/starrocks/, in layer folders
-      deploy/deploy_bronze_table.py         creates or checks the bronze table (the platform contract)
+      bronze/bronze_ingestion.py            pulls new StarRocks audit rows into bronze (watermark minus a lookback)
+      deploy/deploy_bronze_table.py         creates or checks the bronze table
       silver/silver_processing.py           streams bronze into silver, insert-only
-      ops/ops_generate_sample_events.py     dev only: synthetic audit rows in the dev bronze table
+      ops/ops_generate_sample_events.py     dev only, optional: synthetic audit rows in the dev bronze table
 materialized_views/        StarRocks materialized views, deployed by the platform to UAT and prod, per subproject
   starrocks/                 mv_starrocks_user_day, _product_day, _table_day, _slow_failed, _login_day
 configs/                   Non-secret settings: dev.yml, uat.yml, prod.yml, optional <product>/<env>.yml
@@ -346,15 +347,17 @@ The deploy adds `lakehouse-mv sha256=...` to the front of each view's comment; i
 Every audit event of the shared StarRocks instance (queries, logins, and platform activity such as materialized-view refreshes and the reconcilers' grants), landed every hour. Built by intent `20261125-starrocks-query-audit`; the design is in `aidlc-docs/current/` until the intent closes, then in `aidlc-docs/knowledge/starrocks/`.
 
 ```text
-StarRocks FE --AuditLoader--> staging table (platform, 7 days)
-  --copy task, hourly at :05, last 2 hours, credentials redacted--> bronze starrocks_audit_event_fe_brz (prod, uat)
-  --starrocks_audit at :20 (silver_processing.py)--> starrocks_audit_event, starrocks_audit_table_access
+StarRocks FE --AuditLoader (platform)--> staging table starrocks_audit_db__.starrocks_audit_tbl__ (7 days)
+  --starrocks_audit at :20, task 1: bronze_ingestion.py (watermark - 30 min, credentials redacted)--> bronze starrocks_audit_event_fe_brz
+  --task 2: silver_processing.py--> starrocks_audit_event, starrocks_audit_table_access
   --views refresh at :35--> mv_starrocks_* (masked only)
 ```
 
+There is one StarRocks instance, so every environment (prod, uat and dev) pulls the same real audit stream into its own bronze table.
+
 | Layer | Table or view | What it holds |
 |---|---|---|
-| bronze | `starrocks_audit_event_fe_brz` | The platform's copy: `query_id`, `event_time` (UTC), `payload` (the audit row as JSON), `copied_at`, `copy_task`. Append-only; a row can appear twice (2-hour overlap). Created by `deploy/deploy_bronze_table.py` (Parquet, partitioned by day). |
+| bronze | `starrocks_audit_event_fe_brz` | The staging rows as pulled: `query_id`, `event_time` (UTC), `payload` (the row as canonical JSON, credentials redacted), `copied_at`, `copy_task` (`bronze_ingestion`). Append-only; a row can appear twice (the 30-minute lookback). Created by `deploy/deploy_bronze_table.py` (Parquet, partitioned by day). |
 | silver | `starrocks_audit_event` | One row per event (`event_type` `query`, `connection`, or `unparsed`), keyed by `event_key` (the query ID, or a hash of the payload). User and actor type (`person`, `product_writer`, `platform_service`), statement category (`SELECT`, `DML`, `DDL`, `ADMIN`, `METADATA`, `SESSION`, `OTHER`), data product and environment, state and `failed`, timings and scan counts, `digest`, `sql_masked` (literals as `?`, comments removed), `sql_text` (full, credentials as `'***'`), `payload` (redacted). Partitioned by `event_date`. |
 | silver | `starrocks_audit_table_access` | One row per event and table its SQL names (best effort), with the table's data product and environment. |
 | gold | `mv_starrocks_user_day` | Queries, failures, scanned rows and bytes, query time per day, user, actor type, environment (metadata and session statements left out). |
@@ -367,14 +370,16 @@ StarRocks FE --AuditLoader--> staging table (platform, 7 days)
 - **Which product an event belongs to**: the session database (`<product>_lh`, `_lhuat`, `_lhdev`, namespace or MV database) first; otherwise the single product among the tables it names, or `multiple`.
 - **Retention**: nothing deletes rows from bronze or silver. Only the slow/failed view keeps 30 days.
 - **Shared logic**: `notebooks/common/audit_sql.py` (pure Python, tested with examples and Hypothesis properties in `tests/starrocks/`).
-- **First deployment** (with the platform's audit intent): the platform applies `data-products/audit.yaml`; run `audit-uat-starrocks_deploy` (then `audit-main-...`) to create bronze; the platform enables the AuditLoader plugin and the copy tasks; `starrocks_audit` then runs hourly and the views are deployed with the bundle.
-- **In dev (Jupyter)**: run `deploy/deploy_bronze_table.py`, then `ops/ops_generate_sample_events.py` (synthetic rows; `events` and `seed` in `TASK_ARGS_VALUES`), then `silver/silver_processing.py`; create views by hand in `audit_lhdev` from the files in `materialized_views/starrocks/`.
+- **Connection to StarRocks**: the platform's `lakehouse_starrocks.connect()`: as the product writer (`srv-audit-writer`, with the run's token) in Airflow, as yourself in Jupyter (it asks for your StarRocks/LDAP password and never stores it). The writer and the audit product's owners and developers need `SELECT` on the staging table, granted by the platform. Host, port and TLS come from the platform, never from this repository.
+- **First deployment** (with the platform's audit intent): the platform applies `data-products/audit.yaml`, installs the AuditLoader plugin and the staging table, grants `SELECT` on it, and ships `lakehouse_starrocks`; run `audit-uat-starrocks_deploy` (then `audit-main-...`) to create bronze; `starrocks_audit` then runs hourly and the views are deployed with the bundle.
+- **In dev (Jupyter)**: run `deploy/deploy_bronze_table.py`, then `bronze/bronze_ingestion.py` (real audit rows; `lookback_minutes` in `TASK_ARGS_VALUES`), then `silver/silver_processing.py`; create views by hand in `audit_lhdev` from the files in `materialized_views/starrocks/`. Without StarRocks, `ops/ops_generate_sample_events.py` fills bronze with synthetic rows instead.
 - **Operations**:
-  - a failed run retries once after 5 minutes; the next hourly run continues from the checkpoint;
+  - a failed task retries once after 5 minutes; the next hourly run continues from the bronze watermark and the silver checkpoint;
+  - missed runs are caught up automatically for gaps up to the staging table's 7 days; to re-read further back, run the bronze task with a larger `lookback_minutes` (up to 10080);
   - to reprocess everything, delete the checkpoint `<checkpoint_path>/starrocks/starrocks_audit_event` (only this one) and run `starrocks_audit`: the insert-only merge adds only missing rows;
   - `unparsed` rows (payload unreadable) are kept with the raw payload and counted in the run's summary log; gold views ignore them;
   - re-running `starrocks_deploy` is safe: it never alters an existing table and fails if the columns differ from the contract.
-- **Limits**: tables named in SQL are found by a tokenizer, not a full parser, so unusual syntax can be missed; the copy task's 2-hour overlap covers one missed hour, longer gaps need the platform's catch-up.
+- **Limits**: tables named in SQL are found by a tokenizer, not a full parser, so unusual syntax can be missed; audit rows older than the staging table's 7 days can't be pulled again.
 
 ## How-to
 

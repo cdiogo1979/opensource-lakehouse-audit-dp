@@ -15,12 +15,13 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from typing import Any, Iterable, Iterator, Mapping, Optional
 
 # --- Contracts ------------------------------------------------------------------------
 
-# Bronze table written by the platform's copy task (Application Design AD-1).
+# Bronze table written by bronze/bronze_ingestion.py from the StarRocks staging table (Application Design AD-1).
 BRONZE_COLUMNS = (
     ("query_id", "STRING"),
     ("event_time", "TIMESTAMP"),
@@ -87,6 +88,8 @@ ACTOR_TYPES = ("person", "product_writer", "platform_service", "unknown")
 SLOW_QUERY_MS = 60_000  # BR-42
 REDACTED = "'***'"
 DEFAULT_CATALOG = "default_catalog"
+# The StarRocks staging table the AuditLoader plugin writes to (platform); read by the bronze task.
+STAGING_TABLE = "starrocks_audit_db__.starrocks_audit_tbl__"
 
 # BR-12: how a payload marks a connection event. Confirmed against StarRocks 4.1.7 by the
 # paired platform intent (probe P-1); change here only.
@@ -806,6 +809,42 @@ def enrich_payload(query_id: Any, event_time: Any, payload: Any, copied_at: Any,
     return row
 
 
+def _json_value(value: Any) -> Any:
+    """A staging value as a JSON-compatible value (datetimes as ``YYYY-MM-DD HH:MM:SS[.ffffff]`` text)."""
+    if isinstance(value, datetime):
+        return utc_naive(value).isoformat(sep=" ")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return int(value) if value == value.to_integral_value() else float(value)
+    if isinstance(value, (bytes, bytearray)):
+        return bytes(value).decode("utf-8", errors="replace")
+    return value
+
+
+def staging_to_bronze(row: Mapping, copied_at: datetime, loader: str) -> tuple:
+    """One StarRocks staging row as one bronze row (``BRONZE_COLUMNS`` order), statement redacted (BR-20, BR-23).
+
+    Args:
+        row: Column name to value, as the staging table returned them.
+        copied_at: When the bronze task read the row (UTC).
+        loader: The bronze row's ``copy_task`` value.
+
+    Returns:
+        ``(query_id, event_time, payload, copied_at, copy_task)``; the payload is canonical JSON, so the same
+        staging row always gives the same payload.
+    """
+    data = {}
+    for key, value in row.items():
+        value = _json_value(value)
+        if _field_name(str(key)) == "stmt" and isinstance(value, str):
+            value = redact_credentials(value)
+        data[str(key)] = value
+    fields = normalized_fields(data)
+    event_time = utc_naive(fields.get("timestamp")) or copied_at
+    return (_text(fields.get("queryid")), event_time, canonical_json(data), copied_at, loader)
+
+
 def table_access_rows(events: Iterable) -> list:
     """One table-access row per event and referenced table (``TABLE_ACCESS_COLUMNS``)."""
     rows = []
@@ -882,7 +921,9 @@ __all__ = [
     "TableRef",
     "Token",
     "actor_type",
+    "STAGING_TABLE",
     "as_tuple",
+    "staging_to_bronze",
     "canonical_json",
     "chunked",
     "ddl_columns",

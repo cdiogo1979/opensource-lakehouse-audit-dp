@@ -51,13 +51,15 @@ Decisions: [starrocks-functional-design-plan.md](../../plans/starrocks-functiona
 - **BR-20** Credentials are replaced by `'***'` (FD-Q2): the string after `IDENTIFIED BY`, `IDENTIFIED WITH <plugin> BY|AS`, `PASSWORD(`, `SET PASSWORD ... =`, and the value of any key-value pair (`"key" = "value"` or `key = 'value'`) whose key contains `password`, `secret`, `access_key`, `access.key`, `accesskey`, `token`, `credential` or `private_key` (case-insensitive). Everything else is unchanged, including whitespace and comments.
 - **BR-21** Silver's `sql_text` is the redacted `stmt`. Masking runs on the redacted text, so `sql_masked` never holds credentials either.
 - **BR-22** Silver's `payload` is the bronze payload with `stmt` redacted, serialized as canonical JSON (sorted keys, no extra whitespace).
-- **BR-23** The bronze contract adds: the platform copy task applies BR-20's patterns to `stmt` before writing (`regexp_replace` in StarRocks), so bronze never holds credentials. Silver still redacts, so a gap in the platform's patterns never reaches silver or gold.
+- **BR-23** The bronze task redacts the statement with BR-20 before appending (`staging_to_bronze`), so bronze never holds credentials; silver redacts again, so synthetic or older rows never reach silver or gold unredacted (pull model, 2026-11-25; supersedes the platform copy task's `regexp_replace`).
 
 ## Keys, deduplication and loading
-- **BR-30** Bronze may hold each staging row twice (the 2-hour copy overlap). Duplicates have identical payloads.
+- **BR-30** Bronze may hold a staging row twice: each run re-reads from the bronze watermark minus the lookback. The same staging row always gives the same canonical payload, so duplicates have identical payloads.
 - **BR-31** `event_key` = the trimmed `queryId` when it is non-empty; otherwise `sha256:` + the SHA-256 of the canonical JSON of the payload as found in bronze (sorted keys, no extra whitespace). Duplicates therefore share a key.
 - **BR-32** Silver is insert-only: a micro-batch is deduplicated by key (keeping the earliest `copied_at` as `first_copied_at`), then merged with "insert when not matched" on (`event_key`, `event_date`) for events and (`event_key`, `ref_catalog`, `ref_database`, `ref_table`, `event_date`) for table accesses. Existing rows are never updated or deleted (FR-7.1).
 - **BR-33** Silver reads bronze as a stream of appended snapshots, `availableNow`, checkpoint `<checkpoint_path>/starrocks/starrocks_audit_event`. Replaying a batch (retry, lost checkpoint) inserts nothing twice, by BR-32.
+- **BR-35** The bronze task (pull model, 2026-11-25) reads `SELECT *` from the staging table (config `starrocks_audit_table`, two plain identifiers) where `` `timestamp` >= `` the bronze watermark minus `lookback_minutes` (0 to 10080, default 30); with an empty bronze it reads every staging row. Rows come oldest first, in chunks of 20000, each appended to bronze; `copy_task = 'bronze_ingestion'`, `copied_at` = the run's start (UTC). The connection is the platform's `lakehouse_starrocks.connect()` and is always closed. Staging values become JSON: datetimes as `YYYY-MM-DD HH:MM:SS[.ffffff]` (UTC), decimals as numbers, bytes as UTF-8 text. Gaps longer than the staging table's 7 days can't be recovered.
+- **BR-36** Every environment pulls the same real stream (one StarRocks instance): prod and uat in Airflow as the product writer, dev in Jupyter as the signed-in user.
 - **BR-34** Silver requires the bronze table: if it doesn't exist, the job fails with "bronze table <name> not found: run the starrocks_deploy workflow first".
 
 ## Gold
@@ -67,5 +69,5 @@ Decisions: [starrocks-functional-design-plan.md](../../plans/starrocks-functiona
 - **BR-43** Views refresh hourly, starting at minute 35, after the hh:20 silver load.
 
 ## Environments and retention
-- **BR-50** The deploy and silver notebooks run in `dev`, `uat` and `prod`. The sample generator runs only in `dev` and refuses others; it requires `--events` to be an integer from 1 to 100000 and `--seed` an integer.
+- **BR-50** The deploy, bronze and silver notebooks run in `dev`, `uat` and `prod`. The optional sample generator runs only in `dev` and refuses others; it requires `--events` to be an integer from 1 to 100000 and `--seed` an integer.
 - **BR-51** Nothing deletes rows from bronze or silver (FR-7.1). Iceberg snapshot expiry, if added later, must not remove rows.

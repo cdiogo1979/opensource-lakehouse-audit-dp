@@ -23,14 +23,14 @@ Intent `20261125-starrocks-query-audit`. Depth: **Standard**. Answers: [requirem
 - FR-1.2 In scope (Q2:C): query statements (SELECT, DML, DDL) from every client; connection events (successful and failed logins); platform activity (materialized-view refreshes, the reconcilers' grants and user changes, loads), which arrive as statements by `root`, `srv-*` users and the MV scheduler.
 - FR-1.3 Staging rows are deleted after **7 days** (partition time-to-live) (Clarification 2:A).
 
-### FR-2 Transfer into the data product (platform, paired intent)
-- FR-2.1 A scheduled StarRocks task copies new staging rows **every hour** into the audit product's Iceberg bronze table in each environment that is enabled (Q1:A, Q5:B).
-- FR-2.2 The copy is safe to re-run: each hourly run copies the last 2 hours of staging rows, so a re-run or a missed hour loses no rows. Bronze may hold the resulting duplicates; silver removes them by event key (changed at Application Design, Q2:B).
-- FR-2.3 Production and UAT receive real copies (one task each); dev gets synthetic rows from an `ops/` notebook (decided at Application Design, Q7:A).
+### FR-2 Transfer into the data product (this repository; the platform provides access) (change request 2026-11-25: pull model)
+- FR-2.1 A bronze task in this repository (`bronze/bronze_ingestion.py`, first task of the hourly workflow) reads new rows from the StarRocks staging table and appends them to the environment's bronze table. Supersedes the scheduled StarRocks copy task chosen at Q1:A (change request 2026-11-25: pull model).
+- FR-2.2 The pull is safe to re-run: it starts at the bronze watermark (newest `event_time`) minus a lookback (default 30 minutes), so a re-run, a late row or missed runs (up to the staging table's 7 days) lose no rows. Bronze may hold the re-read rows twice; silver removes them by event key.
+- FR-2.3 There is one StarRocks instance, so every environment, prod, uat **and dev**, pulls the same real audit stream into its own bronze table (user request 2026-11-25; supersedes "dev gets synthetic rows", Q7:A). The synthetic `ops/` generator stays as an optional offline tool for dev.
 
 ### FR-3 Bronze (this repository)
 - FR-3.1 A new subproject `starrocks` (folders under `workflows/`, `notebooks/workload/`, `materialized_views/`, `aidlc-docs/knowledge/`).
-- FR-3.2 Bronze table `starrocks_audit_event_fe_brz` (naming `<project>_<entity>_<source>_brz`) holds the raw audit row unchanged as a JSON payload (including the full SQL text), plus `query_id`, `event_time` and load metadata. The platform task fills it; this repository creates it with its declared schema (a `deploy/` notebook) so the table definition lives here (refined at Application Design, Q1:B).
+- FR-3.2 Bronze table `starrocks_audit_event_fe_brz` (naming `<project>_<entity>_<source>_brz`) holds the staging row unchanged as canonical JSON (credentials in the statement redacted), plus `query_id`, `event_time` and load metadata. This repository creates it (a `deploy/` notebook) and fills it (the bronze task).
 
 ### FR-4 Silver (this repository)
 - FR-4.1 An hourly workflow `starrocks_audit` merges new bronze rows into silver `starrocks_audit_event` (one table, `event_type` query or connection) and `starrocks_audit_table_access` (per referenced table), deduplicated by event key (refined at Application Design, Q4:A).
@@ -83,7 +83,7 @@ Intent `20261125-starrocks-query-audit`. Depth: **Standard**. Answers: [requirem
 | Property-Based Testing | Partial |
 
 ## Dependencies and open points
-- **D-1 Paired platform intent** in `opensource-lakehouse-infra` (Q8:A): `data-products/audit.yaml` (FR-6), AuditLoader plugin and staging table with a 7-day time-to-live (FR-1), the hourly StarRocks copy task and the identity it runs as (FR-2), and any grant it needs. Until it is delivered, this repository can be developed and tested against fixtures, and in dev with sample rows.
-- **P-1 To verify in the paired intent**: whether the AuditLoader plugin for StarRocks 4.1.7 records connection events as well as queries (FR-1.2); whether StarRocks' scheduled tasks (`SUBMIT TASK ... SCHEDULE`) can write to an Iceberg table in a Polaris catalog; which user the task runs as and how that identity is authorized to write to `audit_lh`.
+- **D-1 Paired platform intent** in `opensource-lakehouse-infra` (Q8:A): `data-products/audit.yaml` (FR-6), the AuditLoader plugin and staging table with a 7-day time-to-live (FR-1), `SELECT` on the staging table for `srv-audit-writer` and the audit owner and developer roles, and a `lakehouse_starrocks.connect()` helper in the workload Python set (Airflow runs: the product writer with the run's token; Jupyter: the signed-in user with their LDAP password), with the StarRocks CA available in the Spark run containers and Jupyter servers (change request 2026-11-25: pull model).
+- **P-1 To verify in the paired intent**: whether the AuditLoader plugin for StarRocks 4.1.7 records connection events as well as queries (FR-1.2); the staging table's exact columns and the FE time zone (bronze `event_time` must be UTC); that Spark run containers and Jupyter servers reach `starrocks-fe:9030`.
 - **P-2** Determining the data product of a query is best-effort (FR-4.3): fully qualified names and the session database are used; unqualified names in other contexts may stay unknown.
 - **P-3** StarRocks' own query cache and data cache do not affect this source: every query is audited by the FE regardless of caching.

@@ -2,15 +2,17 @@
 # # StarRocks audit: generate sample events (dev only)
 #
 # This Jupytext `py:percent` notebook appends synthetic StarRocks audit rows to the
-# **dev** bronze table `starrocks_audit_event_fe_brz`, because the platform copies
-# real audit rows only into uat and prod. The rows have the same shape as the
-# platform's copy (`query_id`, `event_time`, `payload` with AuditLoader's camelCase
+# **dev** bronze table `starrocks_audit_event_fe_brz`. Optional: dev normally pulls the
+# real audit log with `bronze/bronze_ingestion.py`; use this when StarRocks or the
+# AuditLoader plugin isn't available, or to exercise edge cases (failures, slow queries,
+# credentials, rows without a query ID). The rows have the same shape as the bronze
+# task's (`query_id`, `event_time`, `payload` with AuditLoader's camelCase
 # keys, `copied_at`, `copy_task = 'ops_generate_sample_events'`) and cover every
 # statement category, people, product writers and platform services, the products
 # `default`, `audit` and `sales` in every environment, failures, slow queries (60 s or
 # more), connection events (some failed), `CREATE USER ... IDENTIFIED BY` statements
-# with fake passwords, events without a query ID, and about 20% duplicated rows, as the
-# copy task's overlap produces. The same `--seed` and start hour give the same rows.
+# with fake passwords (not redacted, unlike the bronze task's rows, so silver's
+# redaction is exercised), events without a query ID, and about 20% duplicated rows. The same `--seed` and start hour give the same rows.
 #
 # **Prerequisites**: the dev bronze table exists (run `deploy/deploy_bronze_table.py`
 # in Jupyter first). **Run it** in Jupyter with `dev` only: it refuses any other

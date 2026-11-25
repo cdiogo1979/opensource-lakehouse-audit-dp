@@ -1,8 +1,8 @@
 # %% [markdown]
 # # StarRocks audit: silver processing
 #
-# This Jupytext `py:percent` notebook turns the StarRocks audit rows that the
-# platform copies into bronze (`starrocks_audit_event_fe_brz`) into two silver
+# This Jupytext `py:percent` notebook turns the StarRocks audit rows that
+# `bronze/bronze_ingestion.py` pulls into bronze (`starrocks_audit_event_fe_brz`) into two silver
 # tables in the environment's namespace:
 #
 # - `starrocks_audit_event`: one row per audit event (query, connection, or
@@ -16,17 +16,17 @@
 # (`trigger(availableNow=True)`), remembered in the checkpoint
 # `<checkpoint_path>/starrocks/starrocks_audit_event`. Each micro-batch is read on
 # the driver in chunks of at most 20000 rows, enriched with
-# `notebooks/common/audit_sql.py`, deduplicated by `event_key` (bronze holds each
-# row up to twice, from the copy task's 2-hour overlap) and merged **insert-only**:
+# `notebooks/common/audit_sql.py`, deduplicated by `event_key` (bronze holds some
+# rows twice, from the bronze task's lookback) and merged **insert-only**:
 # silver rows are never updated or deleted, so retries, replays and a lost
 # checkpoint never create duplicates. The first run creates both silver tables,
 # partitioned by `event_date`. It logs one JSON record at the start and a summary
 # at the end (rows read, events inserted, unparsed rows, table accesses).
 #
 # Requires the bronze table (run the `starrocks_deploy` workflow first). In
-# Airflow, `workflows/starrocks/starrocks_audit.json` runs it every hour at minute
-# 20 (task `starrocks_audit_event_load`). In Jupyter (`dev`), fill bronze with
-# `ops/ops_generate_sample_events.py` first. No task arguments.
+# Airflow, `workflows/starrocks/starrocks_audit.json` runs it every hour after the
+# bronze task (task `starrocks_audit_event_load`). In Jupyter, run
+# `bronze/bronze_ingestion.py` first. No task arguments.
 
 # %% [markdown]
 # ## Initialization

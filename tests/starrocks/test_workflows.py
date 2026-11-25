@@ -22,11 +22,19 @@ def test_workflow_shape_and_entry_points(name):
         assert (REPOSITORY_ROOT / "notebooks" / "workload" / "starrocks" / task["entrypoint"]).is_file()
 
 
-def test_the_hourly_load_runs_after_the_platform_copy_and_before_the_views():
+def test_the_hourly_load_pulls_bronze_then_merges_silver_before_the_views():
     workflow = load("starrocks_audit")
     assert workflow["schedule"] == "20 * * * *"
-    (task,) = workflow["tasks"]
-    assert task == {"name": "starrocks_audit_event_load", "entrypoint": "silver/silver_processing.py", "retries": 1, "retry_delay_seconds": 300, "execution_timeout_seconds": 2400}
+    bronze_task, silver_task = workflow["tasks"]
+    assert bronze_task == {"name": "starrocks_audit_event_fe_brz_load", "entrypoint": "bronze/bronze_ingestion.py", "retries": 1, "retry_delay_seconds": 300, "execution_timeout_seconds": 1800}
+    assert silver_task == {
+        "name": "starrocks_audit_event_load",
+        "entrypoint": "silver/silver_processing.py",
+        "runs_after": ["starrocks_audit_event_fe_brz_load"],
+        "retries": 1,
+        "retry_delay_seconds": 300,
+        "execution_timeout_seconds": 2400,
+    }
 
 
 def test_the_deploy_is_manual():

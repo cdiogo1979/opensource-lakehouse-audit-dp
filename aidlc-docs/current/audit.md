@@ -237,3 +237,33 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Code Generation (starrocks) — Change Request: pull model
+**Timestamp**: 2026-11-25T20:40:00Z
+**User Input**: "how does the real events come to the data product? i would expect a bronze task to extract the data from starrocks"
+**AI Response**: "Explained the approved push model (platform AuditLoader plus a scheduled StarRocks copy task writing bronze; Requirements Q1:A) and the alternative pull model (a bronze task in this repository reading the staging table as the product writer). Checked feasibility: Spark run containers join the data-access network where starrocks-fe listens; the platform's MV deployer already logs in to StarRocks with a writer token (PyMySQL, TLS). Recommended switching; asked for a decision."
+**Context**: CONSTRUCTION - Code Generation gate (starrocks) held; change request.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (starrocks) — Change Request: dev pulls production data
+**Timestamp**: 2026-11-25T20:45:00Z
+**User Input**: "for testing , also dev branch should be able to get the data from starrocks production (we dont have multiple environments)"
+**AI Response**: "Read as approval of the pull model plus a new requirement: dev (Jupyter; there is no dev Airflow bundle) also pulls the real StarRocks audit rows, since there is one StarRocks instance. Supersedes Q1:A (now: bronze task in this repository), AD-1/AD-2 copy task, AD-7 (dev synthetic; now every environment pulls the same real stream; the sample generator stays as an optional offline tool). Credentials: Python job code has no access to the writer token in Airflow, and people log in to StarRocks with LDAP passwords, so the repository depends on a platform helper lakehouse_starrocks.connect() (Airflow: writer token; Jupyter: the user's password via getpass), added to the paired intent. Implementing the change and updating requirements, application design and functional design (DOC-01)."
+**Context**: CONSTRUCTION - Code Generation (starrocks) change request, approved by the user's message; gate remains held until the revised code is approved.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (starrocks) — Change Request Applied
+**Timestamp**: 2026-11-25T21:20:00Z
+**User Input**: "[No user input]"
+**AI Response**: "Applied the pull model: audit_sql.staging_to_bronze; bronze/bronze_ingestion.py (watermark minus lookback_minutes, default 30; chunks of 20000; redacts; lakehouse_starrocks.connect() from the platform); starrocks_audit runs bronze then silver; starrocks_audit_table in configs; notebook titles, README, AGENTS.md. DOC-01: requirements FR-2/FR-3.2/D-1/P-1, application design AD-2/AD-7/AD-10/C6/P3/services/dependencies/methods, functional design BR-23/BR-30/BR-35/BR-36/BR-50 and entities, logic model, properties. Verification: code_quality all PASS; pytest 260 passed; validator OK 2 workflows, 5 MVs; Python 3.10 grammar check PASS. The Spark runtime image had been removed by Rancher Desktop's image cleanup, so the in-image Python 3.10 recheck moves to Build and Test. Committed locally."
+**Context**: CONSTRUCTION - Code Generation (starrocks) change request applied; awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---

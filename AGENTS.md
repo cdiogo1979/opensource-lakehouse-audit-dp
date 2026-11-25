@@ -23,13 +23,14 @@ Every subproject has a folder with the **same name** under `workflows/` and `not
 ```text
 workflows/
 └── starrocks/
-    ├── starrocks_audit.json         hourly silver load
+    ├── starrocks_audit.json         hourly bronze pull, then silver load
     └── starrocks_deploy.json        manual: creates the bronze table
 notebooks/
 ├── common/                 shared by every subproject (audit_sql.py: SQL masking and classification)
 └── workload/
     └── starrocks/
         ├── bronze/                  raw ingestion
+        │   └── bronze_ingestion.py
         ├── silver/                  cleaned or conformed data
         │   └── silver_processing.py
         ├── gold/                    curated, consumption-ready data

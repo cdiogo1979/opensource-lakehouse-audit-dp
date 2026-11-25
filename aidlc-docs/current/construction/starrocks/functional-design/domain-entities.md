@@ -5,24 +5,24 @@ All tables live in the environment's namespace (`audit_lh`, `audit_lhuat`, `audi
 ## Relationships
 
 ```text
-staging row (StarRocks, platform) --copy task, 1..2 copies--> AuditEventRaw (bronze)
+staging row (StarRocks, platform) --bronze task, 1..2 reads--> AuditEventRaw (bronze)
 AuditEventRaw (n duplicates) --event_key--> AuditEvent (silver, 1)
 AuditEvent (1) --event_key--> TableAccess (silver, 0..n)
 AuditEvent / TableAccess --aggregate or filter--> gold views
 ```
 
 ## AuditEventRaw — bronze `starrocks_audit_event_fe_brz`
-The cross-repository contract (Application Design AD-1). Iceberg format-version 2, `write.format.default = parquet`, partitioned by `days(event_time)`, append-only.
+Written by the bronze task (AD-1, AD-10). Iceberg format-version 2, `write.format.default = parquet`, partitioned by `days(event_time)`, append-only.
 
 | Column | Type | Null | Meaning |
 |---|---|---|---|
 | `query_id` | string | yes | Staging `queryId` |
 | `event_time` | timestamp | no | Staging `timestamp`, UTC |
-| `payload` | string | no | JSON object of every staging column, keys as in the staging table; credentials already redacted by the copy task (BR-20) |
-| `copied_at` | timestamp | no | When the copy task wrote the row (UTC) |
-| `copy_task` | string | no | Writer name: `audit_copy_prod`, `audit_copy_uat`, or `ops_generate_sample_events` in dev |
+| `payload` | string | no | Canonical JSON object of every staging column, keys as in the staging table; statement credentials redacted by the bronze task (BR-20, BR-23) |
+| `copied_at` | timestamp | no | When the bronze task read the row (UTC) |
+| `copy_task` | string | no | Writer name: `bronze_ingestion`, or `ops_generate_sample_events` for synthetic dev rows |
 
-No key: the same staging row appears once or twice (2-hour overlap, BR-30).
+No key: the same staging row appears once or twice (the bronze task's lookback, BR-30).
 
 ## AuditEvent — silver `starrocks_audit_event`
 One row per audit event. Partitioned by `event_date` (identity; BR-41). Insert-only (BR-32).

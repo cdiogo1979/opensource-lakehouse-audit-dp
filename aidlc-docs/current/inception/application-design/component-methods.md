@@ -20,6 +20,20 @@ Signatures and purposes only. Business rules (masking grammar, category lists, i
 
 Types: `Token`, `TableRef` and `Scope` are frozen dataclasses (or named tuples) defined in the module.
 
+## C6 `bronze/bronze_ingestion.py` (pull model, 2026-11-25)
+
+| Function | Purpose |
+|---|---|
+| `check_arguments(arguments) -> int` | `lookback_minutes`, 0 to 10080 (default 30) |
+| `staging_table(config) -> str` | Config `starrocks_audit_table` (default `starrocks_audit_db__.starrocks_audit_tbl__`), checked as `<database>.<table>` |
+| `bronze_watermark(spark, config) -> datetime \| None` | Newest bronze `event_time`; fails when bronze is missing |
+| `pull_query(table, since) -> (sql, parameters)` | `SELECT * ... WHERE \`timestamp\` >= %s ORDER BY \`timestamp\``, all rows when `since` is `None` |
+| `fetch_rows(connection, sql, parameters, size)` | Rows as dicts, `fetchmany(size)` at a time |
+| `ingest(spark, config, connection, lookback_minutes, now) -> dict` | Watermark, query, chunks of C1 `staging_to_bronze`, append |
+| `process(spark, config, lookback_minutes, connect) -> dict` | Opens `lakehouse_starrocks.connect()`, ingests, closes, logs |
+
+C1 adds `staging_to_bronze(row, copied_at, loader) -> tuple`: one staging row as one bronze tuple, statement redacted, payload canonical JSON.
+
 ## C2 `deploy/deploy_bronze_table.py`
 
 | Function | Purpose |
