@@ -12,7 +12,7 @@ Intent `20261125-starrocks-query-audit`. Inputs: [requirements.md](../requiremen
 ### Change Impact Assessment
 - **User-facing changes**: Yes. New tables and views for the audit groups; analysts see masked views only.
 - **Structural changes**: Yes. New subproject `starrocks`; subprojects `sample` and `tpch` retired.
-- **Data model changes**: Yes. New bronze table (a contract shared with the platform's copy task), silver tables, gold views.
+- **Data model changes**: Yes. New bronze table (filled by this repository's bronze task since the 2026-11-25 change request), silver tables, gold views.
 - **API changes**: Yes, one contract: the bronze table schema (`query_id`, `event_time`, JSON `payload`, copy metadata) that the platform's StarRocks task writes and this repository reads (Application Design AD-1).
 - **NFR impact**: Yes. Hourly freshness, no lost or duplicated rows, privacy of the full SQL text, fit in one Spark container.
 
@@ -20,7 +20,7 @@ Intent `20261125-starrocks-query-audit`. Inputs: [requirements.md](../requiremen
 - **Primary component**: `starrocks` subproject (new): `workflows/starrocks/`, `notebooks/workload/starrocks/`, `materialized_views/starrocks/`.
 - **Shared components**: `notebooks/common/` (`job_runtime`, `cli`, `config_loader`): used as-is.
 - **Supporting components**: `tests/`, `Jenkinsfile`, `scripts/code_quality.sh`: CI unchanged; tests retargeted.
-- **External dependency**: `opensource-lakehouse-infra` paired intent: `data-products/audit.yaml`, the AuditLoader plugin and 7-day staging table, the hourly copy task into bronze, and the identity it runs as.
+- **External dependency**: `opensource-lakehouse-infra` paired intent: `data-products/audit.yaml`, the AuditLoader plugin and 7-day staging table, `SELECT` grants on it, and the `lakehouse_starrocks.connect()` helper the bronze task uses (pull model since the 2026-11-25 change request).
 
 | Component | Change type | Reason | Priority |
 |---|---|---|---|
@@ -130,7 +130,7 @@ DEPLOY:       Deploy handoff (PR request, deploy instructions)
 - [ ] NFR Design — SKIP
   - **Rationale**: NFR Requirements skipped; re-run safety and privacy are part of Functional Design.
 - [ ] Infrastructure Design — SKIP
-  - **Rationale**: this repository owns no infrastructure. The plugin, staging table, copy task, product file and grants belong to the paired platform intent, which consumes this intent's Application Design.
+  - **Rationale**: this repository owns no infrastructure. The plugin, staging table, `lakehouse_starrocks` helper, product file and grants belong to the paired platform intent, which consumes this intent's Application Design.
 - [ ] Code Generation — EXECUTE (ALWAYS), per unit, Unit 1 first
   - **Rationale**: Unit 1 removes the stale workflows and tests, drops `duckdb`, and renames the repository references; after it passes `scripts/code_quality.sh all` and the tests, the first commit is pushed to `main` and `uat` (user decision, FR-8.4). Unit 2 then builds the subproject on a branch.
 - [ ] Build and Test — EXECUTE (ALWAYS)
@@ -156,7 +156,7 @@ DEPLOY:       Deploy handoff (PR request, deploy instructions)
 1. **Unit 1 `repo-identity`** (this repository): remove `workflows/sample/`, `workflows/tpch/`, `tests/workload_foundation/test_generate_tpch.py`; retarget the other foundation tests away from sample and tpch; drop `duckdb` from `requirements.txt`; rename `opensource-lakehouse-sample-dp` in README, AGENTS.md and the Initialization cell rule; README rewritten for the audit product. Gate: code quality, tests and `lakehouse-validate-workflows .` (if available locally) pass. Then the first commit, pushed to `main` and `uat`.
 2. **Paired platform intent** (in `opensource-lakehouse-infra`): may start once this intent's Application Design is approved, since it fixes the bronze contract. It runs in parallel with Unit 2.
 3. **Unit 2 `starrocks`** (this repository, branch): Functional Design, then Code Generation.
-4. **Integration**: once the platform has delivered `audit.yaml` and the copy task, dev checks and then uat.
+4. **Integration**: once the platform has delivered `audit.yaml`, the AuditLoader staging table, the grants and `lakehouse_starrocks`, dev checks and then uat.
 
 ## Estimated Timeline
 - **Stages to execute**: 5 (Application Design, Functional Design, Code Generation for 2 units, Build and Test, Deploy).

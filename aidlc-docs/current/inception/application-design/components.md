@@ -10,9 +10,14 @@ Subproject `starrocks` of the `audit` data product, plus the platform-side compo
 - **Responsibilities**: tokenizing SQL (quote- and comment-aware); masking literals; categorizing statements; classifying actors; inferring data product and environment; extracting referenced tables; computing the event key.
 - **Interface**: plain functions (see [component-methods.md](component-methods.md)); no I/O, no configuration.
 
+### C6 Bronze ingestion (pull model, 2026-11-25)
+- **Where**: `notebooks/workload/starrocks/bronze/bronze_ingestion.py`; first task (`starrocks_audit_event_fe_brz_load`) of `workflows/starrocks/starrocks_audit.json`.
+- **Purpose**: pulls new staging rows (from the bronze watermark minus `lookback_minutes`, default 30; all rows on the first run) through `lakehouse_starrocks.connect()`, redacts the statement, and appends them to bronze in chunks of 20000.
+- **Responsibilities**: the only writer of bronze in every environment (prod, uat, dev); never deletes; fails clearly when bronze is missing.
+
 ### C2 Bronze table deployment
 - **Where**: `notebooks/workload/starrocks/deploy/deploy_bronze_table.py`; workflow `workflows/starrocks/starrocks_deploy.json` (manual, `schedule: null`).
-- **Purpose**: creates the bronze table `starrocks_audit_event_fe_brz` that the platform's StarRocks task writes to, so its definition lives in this repository. It is idempotent: it creates the table if it is missing and checks the schema if it exists.
+- **Purpose**: creates the bronze table `starrocks_audit_event_fe_brz` that C6 writes to. It is idempotent: it creates the table if it is missing and checks the schema if it exists.
 - **Responsibilities**: own the bronze contract (columns, Parquet format, partitioning, location `<storage_path>/<catalog_name>/<database_name>/starrocks_audit_event_fe_brz`); fail on a schema mismatch instead of altering the table.
 
 ### C3 Silver processing
@@ -28,7 +33,7 @@ Subproject `starrocks` of the `audit` data product, plus the platform-side compo
 
 ### C5 Dev sample events
 - **Where**: `notebooks/workload/starrocks/ops/ops_generate_sample_events.py` (run in Jupyter as a developer; no workflow).
-- **Purpose**: fills the dev bronze table with synthetic, realistic audit rows (queries of every category, connections, failures, platform users), since dev receives no real audit rows (Q7:A).
+- **Purpose**: optional in dev (pull model, 2026-11-25): fills the dev bronze table with synthetic, realistic audit rows (queries of every category, connections, failures, platform users, unredacted fake passwords) when StarRocks isn't available or to exercise edge cases.
 - **Rule**: refuses to run in any environment other than `dev`.
 
 ### C6 Template cleanup (Unit 1 `repo-identity`)
@@ -42,6 +47,7 @@ Subproject `starrocks` of the `audit` data product, plus the platform-side compo
 ### P2 Capture: AuditLoader plugin and staging table
 - `starrocks_audit_db__.starrocks_audit_tbl__`, dynamic daily partitions, 7-day time-to-live (FR-1.3).
 
-### P3 Copy tasks
-- Two scheduled StarRocks tasks, one per receiving environment (prod `audit_lh`, uat `audit_lhuat`; Q7:A), every hour, copying the last 2 hours of staging rows into that environment's bronze table (Q2:B). The JSON payload is built from the staging table's columns (Q1:B).
-- The identity the tasks run as, and its write grant on the two bronze tables, are designed in the paired intent (probe P-1).
+### P3 Access for the bronze task (pull model, 2026-11-25)
+- `SELECT` on the staging table for `srv-audit-writer` and the audit owner and developer roles.
+- `lakehouse_starrocks.connect()` in the workload Python set (beside `lakehouse_spark`): a DB-API connection to StarRocks over TLS as the product writer with the run's token in Airflow, or as the signed-in user with their LDAP password (asked with `getpass`, never stored) in Jupyter; host, port and CA from the platform.
+- Network access from Spark run containers and Jupyter servers to `starrocks-fe:9030`.
