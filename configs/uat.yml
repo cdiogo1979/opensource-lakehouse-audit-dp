@@ -1,0 +1,7 @@
+# The audit product's UAT environment: bucket, Polaris catalog and namespace (bundle audit-uat).
+storage_path: "s3a://bucket-audit-uat/"
+catalog_name: "lakehouse_uat"
+database_name: "audit_lhuat"
+# Spark Structured Streaming checkpoints: this environment's bucket, under checkpoints/.
+# The s3ckpt:// scheme is the platform's checkpoint filesystem (its key is mounted by the platform).
+checkpoint_path: "s3ckpt://bucket-audit-uat/checkpoints"

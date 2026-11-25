@@ -1,0 +1,7 @@
+# The audit product's development environment: bucket, Polaris catalog and namespace (Jupyter only).
+storage_path: "s3a://bucket-audit-dev/"
+catalog_name: "lakehouse_dev"
+database_name: "audit_lhdev"
+# Spark Structured Streaming checkpoints: this environment's bucket, under checkpoints/.
+# The s3ckpt:// scheme is the platform's checkpoint filesystem (its key is mounted by the platform).
+checkpoint_path: "s3ckpt://bucket-audit-dev/checkpoints"
