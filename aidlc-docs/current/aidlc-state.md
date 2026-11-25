@@ -3,7 +3,7 @@
 ## Project Information
 - Project Type: Brownfield
 - Start Date: 2026-11-25T17:17:31Z
-- Current Stage: DEPLOY - Deploy handoff (awaiting approval)
+- Current Stage: Intent closure ON HOLD: waiting for the paired platform intent; then run deploy_instructions steps 6 and 10 and close with verification passed (user decision 2026-11-25, no waiver)
 - Intent: Build the first source of the audit and observability data product: every query executed in StarRocks captured, stored as Iceberg tables in the audit product's namespaces, and made queryable.
 - Intent ID: 20261125-starrocks-query-audit
 - Previous Intent: aidlc-docs/archive/20261112-sample-dependency-alerts (closed in the template repository `opensource-lakehouse-sample-dp`; its archive was removed from this working tree)
@@ -45,7 +45,7 @@
 - [x] Build and Test — approved 2026-11-25: local verification PASS (unit 260, code quality, validator, Python 3.10, Spark smoke); platform integration NOT RUN (blocked by the paired intent)
 
 ### DEPLOY PHASE
-- [ ] Deploy handoff — `deploy/pr_request.md` and `deploy/deploy_instructions.md` awaiting approval
+- [x] Deploy handoff — approved 2026-11-25 (documents only; nothing pushed or deployed)
 
 ## Extension Configuration
 | Extension | Enabled | Decided At |

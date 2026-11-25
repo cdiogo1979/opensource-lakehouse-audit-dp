@@ -317,3 +317,23 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Deploy — Approval
+**Timestamp**: 2026-11-25T22:25:00Z
+**User Input**: "approve and continue"
+**AI Response**: "Classified as approve-continue. Deploy handoff approved. Next is intent closure, which requires passed verification or an explicitly accepted verification waiver: platform integration was not run (blocked by the paired intent), so asked whether to waive it and close, or keep the intent open. Not treated as authorization to push or open the PR."
+**Context**: DEPLOY - Deploy approved; closure decision pending.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Closure Decision and Publication
+**Timestamp**: 2026-11-25T22:30:00Z
+**User Input**: "Closure: Keep the intent open (Recommended); Push and PR: Push and open PR"
+**AI Response**: "Intent stays ACTIVE at the closure step, no waiver; resume after the paired platform intent delivers (deploy_instructions steps 6 and 10), then close with verification passed. Pushed branch starrocks-query-audit to origin; the GitHub CLI is not installed, so the pull request into uat is opened by the user from the compare link with pr_request.md as its description."
+**Context**: Intent closure on hold; publication.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
