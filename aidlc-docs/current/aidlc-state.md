@@ -3,7 +3,7 @@
 ## Project Information
 - Project Type: Brownfield
 - Start Date: 2026-11-25T17:17:31Z
-- Current Stage: CONSTRUCTION - Unit 2 starrocks, Code Generation complete (awaiting approval)
+- Current Stage: CONSTRUCTION - Build and Test (awaiting approval)
 - Intent: Build the first source of the audit and observability data product: every query executed in StarRocks captured, stored as Iceberg tables in the audit product's namespaces, and made queryable.
 - Intent ID: 20261125-starrocks-query-audit
 - Previous Intent: aidlc-docs/archive/20261112-sample-dependency-alerts (closed in the template repository `opensource-lakehouse-sample-dp`; its archive was removed from this working tree)
@@ -40,9 +40,9 @@
 
 ### CONSTRUCTION PHASE
 - [x] Unit 1 `repo-identity`: Code Generation — approved 2026-11-25; commit `dd99258` on `main` and `uat`
-- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation done; change request 2026-11-25 (pull model, dev pulls real data) applied: 260 tests, all checks green, committed locally; awaiting approval
-- [ ] NFR Requirements, NFR Design, Infrastructure Design — SKIP (planned)
-- [ ] Build and Test
+- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation approved 2026-11-25 (including the pull-model change request)
+- [x] NFR Requirements, NFR Design, Infrastructure Design — SKIPPED
+- [ ] Build and Test — local verification PASS (unit 260, code quality, validator, Python 3.10, Spark smoke); platform integration blocked by the paired intent; awaiting approval
 
 ### DEPLOY PHASE
 - [ ] Deploy handoff
@@ -59,7 +59,7 @@
 <!-- intent-lifecycle:start -->
 ```json
 {
-  "current_stage": "CONSTRUCTION - Code Generation (starrocks)",
+  "current_stage": "CONSTRUCTION - Build and Test",
   "intent_id": "20261125-starrocks-query-audit",
   "name": "StarRocks Query Audit",
   "previous_intent": "aidlc-docs/archive/20261112-sample-dependency-alerts",

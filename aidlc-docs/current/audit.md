@@ -267,3 +267,33 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Code Generation (starrocks) — Approval
+**Timestamp**: 2026-11-25T21:30:00Z
+**User Input**: "approve and continue"
+**AI Response**: "Classified as approve-continue. Unit 2 Code Generation (with the pull-model change request) approved; starting Build and Test."
+**Context**: CONSTRUCTION - Code Generation approved (starrocks).
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Build and Test — Questions
+**Timestamp**: 2026-11-25T21:35:00Z
+**User Input**: "Spark image: Rebuild and test (Recommended); Analyst prod: requorement stands but document the yaml with the justification"
+**AI Response**: "Rebuilt local/lakehouse-spark-runtime:3.5.9_1.10.2 with docker build only (from cache; no platform restart). Edited opensource-lakehouse-infra/data-products/audit.yaml (untracked, created by the user): access.analyst.prod none, with comments giving the FR-6.2 justification; materialized_views.analyst.prod stays read. Not committed or applied in the platform repository."
+**Context**: CONSTRUCTION - Build and Test.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Build and Test — Results and Approval Prompt
+**Timestamp**: 2026-11-25T22:00:00Z
+**User Input**: "[No user input]"
+**AI Response**: "compileall PASS; code_quality.sh all PASS; pytest 260 passed; lakehouse_dags.validate OK 2 workflows, 5 MVs; Python 3.10.12 in the platform image PASS; Spark smoke (real Spark 3.5.9 + Iceberg 1.10.2, local Hadoop catalog, no network) PASS: 600 events, 600 distinct keys after first load, no-op run and duplicate-only run; 512 table accesses; no fake passwords in bronze or silver. Added scripts/spark_smoke_starrocks.py (rerunnable). Findings: silver summary 'events' counts processed not inserted; outer session needs REFRESH TABLE to read what micro-batches wrote; audit.yaml analyst fix pending in the platform repo; platform images can be deleted by Rancher Desktop. Platform integration not run: blocked by the paired intent. Generated build-instructions.md, unit-test-instructions.md, integration-test-instructions.md, performance-test-instructions.md, build-and-test-summary.md. Asked for approval."
+**Context**: CONSTRUCTION - Build and Test; awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
