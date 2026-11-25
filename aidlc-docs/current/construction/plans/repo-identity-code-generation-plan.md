@@ -49,9 +49,10 @@ Intent `20261125-starrocks-query-audit`. This plan is the single source of truth
 - [x] `aidlc-docs/current/construction/repo-identity/code/summary.md`: files modified, created and deleted, and the verification results.
 
 ### Step 9 — First commit and push (FR-8.4, user decision)
-- [ ] `git add -A`; one commit on `main`: "Audit data product: repository baseline from the lakehouse template" (with the attribution line).
-- [ ] Create `uat` from the same commit.
-- [ ] `git push -u origin main uat`.
+- [x] `git add -A`; one commit on `main`: "Audit data product: repository baseline from the lakehouse template" (with the attribution line).
+- [x] Create `uat` from the same commit.
+- [x] `git push -u origin main uat`.
+- Done 2026-11-25: commit `dd99258` on `main` and `uat`, pushed to `origin`.
 - **Approving this plan authorizes this step** (an outward-facing push to `https://github.com/cdiogo1979/opensource-lakehouse-audit-dp`). It runs only after Step 7 is green.
 
 ### Step 10 — Added during generation (DOC-02)

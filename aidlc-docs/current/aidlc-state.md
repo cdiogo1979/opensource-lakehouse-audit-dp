@@ -3,7 +3,7 @@
 ## Project Information
 - Project Type: Brownfield
 - Start Date: 2026-11-25T17:17:31Z
-- Current Stage: CONSTRUCTION - Unit 1 repo-identity, Code Generation Part 1 (plan awaiting approval)
+- Current Stage: CONSTRUCTION - Unit 2 starrocks, Code Generation complete (awaiting approval)
 - Intent: Build the first source of the audit and observability data product: every query executed in StarRocks captured, stored as Iceberg tables in the audit product's namespaces, and made queryable.
 - Intent ID: 20261125-starrocks-query-audit
 - Previous Intent: aidlc-docs/archive/20261112-sample-dependency-alerts (closed in the template repository `opensource-lakehouse-sample-dp`; its archive was removed from this working tree)
@@ -39,8 +39,8 @@
 - [x] Units Generation — SKIPPED: Unit 1 `repo-identity`, Unit 2 `starrocks`.
 
 ### CONSTRUCTION PHASE
-- [ ] Unit 1 `repo-identity`: Code Generation — Part 1 plan `construction/plans/repo-identity-code-generation-plan.md` awaiting approval; then first push of `main` and `uat`
-- [ ] Unit 2 `starrocks`: Functional Design (EXECUTE), Code Generation
+- [x] Unit 1 `repo-identity`: Code Generation — approved 2026-11-25; commit `dd99258` on `main` and `uat`
+- [ ] Unit 2 `starrocks` (branch `starrocks-query-audit`): Functional Design approved 2026-11-25; Code Generation done (240 tests, all checks green, committed locally); awaiting approval
 - [ ] NFR Requirements, NFR Design, Infrastructure Design — SKIP (planned)
 - [ ] Build and Test
 
@@ -59,7 +59,7 @@
 <!-- intent-lifecycle:start -->
 ```json
 {
-  "current_stage": "CONSTRUCTION - Code Generation (repo-identity)",
+  "current_stage": "CONSTRUCTION - Code Generation (starrocks)",
   "intent_id": "20261125-starrocks-query-audit",
   "name": "StarRocks Query Audit",
   "previous_intent": "aidlc-docs/archive/20261112-sample-dependency-alerts",

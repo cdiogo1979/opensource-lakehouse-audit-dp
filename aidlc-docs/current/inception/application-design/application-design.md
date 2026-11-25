@@ -8,7 +8,7 @@ Intent `20261125-starrocks-query-audit`, subproject `starrocks` of the `audit` d
 | AD-1 | Bronze `starrocks_audit_event_fe_brz` holds `query_id`, `event_time`, the whole staging row as a JSON `payload`, `copied_at`, `copy_task`; a StarRocks version change touches only the payload | Q1:B |
 | AD-2 | The platform task copies the last 2 hours every hour, without checking bronze; bronze is append-only and holds overlap duplicates; silver deduplicates by `event_key` | Q2:B |
 | AD-3 | Silver reads bronze with Structured Streaming `availableNow` and a checkpoint, merging insert-if-absent | Q3:A |
-| AD-4 | One silver event table `starrocks_audit_event` (`event_type` query or connection), plus `starrocks_audit_table_access` (event and referenced table) for per-table usage | Q4:A; the child table is a design addition, so `unnest` isn't needed in views |
+| AD-4 | One silver event table (partitioned by `event_date`, Functional Design BR-41) `starrocks_audit_event` (`event_type` query or connection), plus `starrocks_audit_table_access` (event and referenced table) for per-table usage | Q4:A; the child table is a design addition, so `unnest` isn't needed in views |
 | AD-5 | Pure logic in `notebooks/common/audit_sql.py`, reused by later audit sources | Q5:A |
 | AD-6 | Own quote- and comment-aware tokenizer for masking; no new dependency | Q6:A |
 | AD-7 | Prod and UAT receive real rows (one copy task each); dev uses a synthetic `ops/` notebook | Q7:A |
@@ -55,4 +55,5 @@ Owners and developers: namespace `read` or higher (full SQL text in silver and b
 - The exact AuditLoader columns of StarRocks 4.1.7 and whether connection events are recorded (P-1). If they aren't, `mv_starrocks_login_day` stays empty and the gap is documented.
 - The FE time zone (bronze `event_time` must be UTC).
 - The copy task's identity and its write grant on `audit_lh` and `audit_lhuat`.
-- Slow-query threshold and failure states (Functional Design).
+- The copy task redacts credentials in `stmt` before writing bronze (Functional Design BR-20, BR-23).
+- Slow-query threshold and failure states: decided in Functional Design (60 s; `state = 'ERR'`; slow/failed detail keeps 30 days).

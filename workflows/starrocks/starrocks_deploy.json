@@ -1,0 +1,10 @@
+{
+  "apiVersion": "lakehouse.local/workflow/v1",
+  "name": "starrocks_deploy",
+  "description": "Manual: creates the StarRocks audit bronze table starrocks_audit_event_fe_brz (the platform copy task's target) if it is missing, and checks it otherwise. Run once per environment before the copy task is enabled.",
+  "schedule": null,
+  "tags": ["starrocks", "audit", "deploy"],
+  "tasks": [
+    {"name": "starrocks_audit_event_fe_brz_create", "entrypoint": "deploy/deploy_bronze_table.py"}
+  ]
+}

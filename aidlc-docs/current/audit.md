@@ -157,3 +157,83 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Code Generation (repo-identity) — Plan Approval
+**Timestamp**: 2026-11-25T18:35:00Z
+**User Input**: "approve and continue"
+**AI Response**: "Classified as approve-continue; plan approved including the Step 9 push. Executing Part 2."
+**Context**: CONSTRUCTION - Code Generation Part 1 approved (repo-identity).
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (repo-identity) — Generation Complete
+**Timestamp**: 2026-11-25T18:50:00Z
+**User Input**: "[No user input]"
+**AI Response**: "Executed Steps 1-9. Deleted stale workflows and tests, moved the nested-settings test into test_config_loader.py, trimmed test_properties.py, renamed incidental names, removed duckdb, rewrote AGENTS.md and README.md for the audit product, fixed config headers. Deviations recorded as Step 10 (prod.yml header; rebuilt the copied .venv whose tool shebangs pointed at a missing interpreter; subproject test allows zero subprojects until Unit 2). Verification: compileall PASS; code_quality.sh all PASS; pytest 68 passed; lakehouse_dags.validate OK 0 workflows; check-extras OK. Commit dd99258 on main, uat created, both pushed to origin. Asked for approval of the generated code."
+**Context**: CONSTRUCTION - Code Generation Part 2 (repo-identity); awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (repo-identity) — Approval
+**Timestamp**: 2026-11-25T18:55:00Z
+**User Input**: "continue to next stage"
+**AI Response**: "Classified as approve-continue. Unit 1 repo-identity complete. Created branch starrocks-query-audit; starting Unit 2 Functional Design."
+**Context**: CONSTRUCTION - Code Generation approved (repo-identity).
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Functional Design (starrocks) — Questions and Artifacts
+**Timestamp**: 2026-11-25T19:15:00Z
+**User Input**: "FD-Q1: Seven categories (Recommended); FD-Q2: Redact everywhere (Recommended); FD-Q3: Remove (Recommended); FD-Q4: Rule order (Recommended); FD-Q5: 60 seconds; FD-Q6: 30 days (Recommended); FD-Q7: Keep as unparsed (Recommended)"
+**AI Response**: "Created starrocks-functional-design-plan.md (7 questions), asked with the question tool, wrote back A, A, A, A, C, A, A. Generated domain-entities.md, business-rules.md (BR-1..BR-51) and business-logic-model.md (algorithms, silver flow, failure behavior, Testable Properties per PBT-01). Design additions: silver partitioned by identity(event_date) so the slow/failed view can use partition_ttl 30 DAY (fallbacks recorded in BR-42); the platform copy task must redact credentials (BR-23, new input for the paired intent). DOC-01 sweep updated component-methods.md, component-dependency.md and application-design.md. Asked for approval."
+**Context**: CONSTRUCTION - Functional Design (starrocks); awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Functional Design (starrocks) — Approval
+**Timestamp**: 2026-11-25T19:20:00Z
+**User Input**: "continue to next stage"
+**AI Response**: "Classified as approve-continue. Functional Design approved; starting Code Generation Part 1 for Unit 2."
+**Context**: CONSTRUCTION - Functional Design approved (starrocks).
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (starrocks) — Plan Approval Prompt
+**Timestamp**: 2026-11-25T19:35:00Z
+**User Input**: "[No user input]"
+**AI Response**: "Read the shared helpers, the platform's MV file rules (one statement, no ';', three placeholders, COMMENT after the name) and the template's tpch silver notebook. Refined the design (DOC-01): silver enriches on the driver in chunks of 20000 with toLocalIterator, because Spark Python workers lack the repository on their import path in Jupyter; updated business-logic-model.md and component-methods.md. Created starrocks-code-generation-plan.md (12 steps; commit local only, push and PR prepared in Deploy). Asked for approval."
+**Context**: CONSTRUCTION - Code Generation Part 1 (starrocks); awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (starrocks) — Plan Approval
+**Timestamp**: 2026-11-25T19:40:00Z
+**User Input**: "approve and continue"
+**AI Response**: "Classified as approve-continue; executing Part 2 (commit local only)."
+**Context**: CONSTRUCTION - Code Generation Part 1 approved (starrocks).
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Code Generation (starrocks) — Generation Complete
+**Timestamp**: 2026-11-25T20:30:00Z
+**User Input**: "[No user input]"
+**AI Response**: "Executed Steps 1-12. Created notebooks/common/audit_sql.py, the deploy, silver and ops notebooks, workflows starrocks_audit and starrocks_deploy, five gold views, and tests/starrocks (172 tests: 98 example, 14 Hypothesis properties, 60 notebook/workflow/view tests); restored the foundation subproject check; README updated. Verification: compileall PASS; code_quality.sh all PASS; pytest 240 passed; lakehouse_dags.validate OK 2 workflows, 5 MVs; Python 3.10.12 check in local/lakehouse-spark-runtime PASS. Deviations recorded as plan Step 13 (BR-9 refinement updated in business-rules.md; W503 refactor; nosec B608 on sample templates). Committed locally on starrocks-query-audit; not pushed."
+**Context**: CONSTRUCTION - Code Generation Part 2 (starrocks); awaiting approval.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---

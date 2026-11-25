@@ -45,7 +45,7 @@ Table `<catalog>.<namespace>.starrocks_audit_event_fe_brz`, Iceberg `format-vers
 |---|---|---|---|
 | `query_id` | string | yes | staging `queryId` |
 | `event_time` | timestamp (UTC) | no | staging `timestamp`, converted to UTC if the FE time zone is not UTC |
-| `payload` | string (JSON object) | no | every staging column, keys named exactly as in the staging table |
+| `payload` | string (JSON object) | no | every staging column, keys named exactly as in the staging table; credentials in `stmt` redacted with `regexp_replace` (Functional Design BR-20, BR-23) |
 | `copied_at` | timestamp (UTC) | no | the copy time |
 | `copy_task` | string | no | the task's name (for example `audit_copy_prod`) |
 
@@ -56,9 +56,9 @@ Rules:
 
 ## Silver contract (consumed by the gold views and by future audit sources)
 
-- `starrocks_audit_event`: `event_key` (unique), `event_type`, `event_time`, `event_date`, `user`, `actor_type`, `client_ip`, `fe_host`, `catalog`, `database`, `data_product`, `environment`, `statement_category`, `query_type`, `is_query`, `state`, `error_code`, `query_time_ms`, `scan_rows`, `scan_bytes`, `return_rows`, `cpu_cost_ns`, `mem_cost_bytes`, `digest`, `sql_masked`, `sql_text` (full), `payload` (raw), `first_copied_at`, `loaded_at`. Partitioned by `days(event_time)`.
-- `starrocks_audit_table_access`: `event_key`, `event_time`, `event_date`, `user`, `ref_catalog`, `ref_database`, `ref_table`, `data_product`, `environment`. Unique on (`event_key`, `ref_catalog`, `ref_database`, `ref_table`).
-- Final column types and nullability are set in Functional Design.
+- `starrocks_audit_event`: `event_key` (unique), `event_type`, `event_time`, `event_date`, `user`, `authorized_user`, `actor_type`, `client_ip`, `fe_host`, `catalog`, `database`, `data_product`, `environment`, `statement_category`, `query_type`, `is_query`, `state`, `failed`, `error_code`, `query_time_ms`, `scan_rows`, `scan_bytes`, `return_rows`, `cpu_cost_ns`, `mem_cost_bytes`, `digest`, `sql_masked`, `sql_text` (full, credentials redacted), `payload` (raw, credentials redacted), `copy_task`, `first_copied_at`, `loaded_at`. Partitioned by `event_date` (identity, so gold views can partition in line; Functional Design BR-41).
+- `starrocks_audit_table_access`: `event_key`, `event_time`, `event_date`, `user`, `actor_type`, `statement_category`, `ref_catalog`, `ref_database`, `ref_table`, `data_product`, `environment`. Unique on (`event_key`, `ref_catalog`, `ref_database`, `ref_table`).
+- Final column types and nullability: [domain-entities.md](../../construction/starrocks/functional-design/domain-entities.md).
 
 ## Communication patterns
 - Every hand-off goes through a table; there are no direct calls between schedulers. Each step is restartable on its own: overlap (copy), checkpoint (silver), full refresh (gold).
