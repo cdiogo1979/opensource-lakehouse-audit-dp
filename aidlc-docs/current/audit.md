@@ -377,3 +377,13 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Change Request — disconnection events (from the paired platform intent)
+**Timestamp**: 2026-11-26T08:05:00Z
+**User Input**: "Fix disconnection first (Recommended)"
+**AI Response**: "The paired platform intent's probe P-1 found AuditLoader 5.0.0 on StarRocks 4.1.7 writes queryType 'connection' (login) and 'disconnection' (logout); live capture confirmed connection rows. Added event_type 'disconnection' (DISCONNECTION_MARKERS; _is_marked), so logouts are neither misread as queries nor counted as logins by mv_starrocks_login_day. BR-12, domain-entities.md and README updated; new test. pytest 261 passed; code_quality all PASS; validator OK. Committed and pushed for a pull request into uat, before the first real uat load."
+**Context**: Intent on hold at closure; change request ahead of the deploy validation.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---

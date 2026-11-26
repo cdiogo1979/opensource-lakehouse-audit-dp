@@ -341,3 +341,13 @@ def test_helpers():
         list(a.chunked([], 0))
     assert a.ddl_columns(a.BRONZE_COLUMNS).startswith("`query_id` STRING, `event_time` TIMESTAMP")
     assert a.as_tuple({"query_id": "q"}, a.BRONZE_COLUMNS) == ("q", None, None, None, None)
+
+
+def test_enrich_payload_logout_is_a_disconnection_not_a_login():
+    """AuditLoader 5.0.0 writes queryType connection (login) and disconnection (logout); logouts never count as logins."""
+    login = json.dumps({"queryType": "connection", "timestamp": "2026-11-26 07:46:02", "user": "'root'@'%'", "state": "OK"})
+    logout = json.dumps({"queryType": "disconnection", "timestamp": "2026-11-26 07:46:09", "user": "'root'@'%'", "state": "OK"})
+    assert a.enrich_payload(None, None, login, None, "t")["event_type"] == "connection"
+    row = a.enrich_payload(None, None, logout, None, "t")
+    assert row["event_type"] == "disconnection" and row["statement_category"] is None and row["referenced_tables"] == []
+    assert a.enrich_payload("q", None, json.dumps({"queryType": "slow_query", "timestamp": "2026-11-26 07:46:09", "stmt": "SELECT 1"}), None, "t")["event_type"] == "query"
