@@ -32,3 +32,6 @@ Intent `20261125-starrocks-query-audit`. Plan: [repo-identity-code-generation-pl
 | `lakehouse_dags.validate .` (platform repository's validator, run locally) | PASS, `OK: 0 workflow(s)` |
 | `workload_python.py check-extras requirements.txt` (platform lock) | PASS, no requirements |
 | Leftover search `sample-dp`, `tpch`, `duckdb` (outside `aidlc-docs/`, tooling folders) | Only the `pytpch` wheel example in README (kept on purpose) |
+
+## Publication
+- Commit `dd99258` "Audit data product: repository baseline from the lakehouse template" on `main`; `uat` created from it; both pushed to `https://github.com/cdiogo1979/opensource-lakehouse-audit-dp`. These records (plan Step 9 ticked, this section) are committed with Unit 2.

@@ -5,3 +5,6 @@ database_name: "audit_lh"
 # Spark Structured Streaming checkpoints: this environment's bucket, under checkpoints/.
 # The s3ckpt:// scheme is the platform's checkpoint filesystem (its key is mounted by the platform).
 checkpoint_path: "s3ckpt://bucket-audit/checkpoints"
+# StarRocks audit: the AuditLoader staging table the bronze task reads (the one shared StarRocks instance;
+# every environment pulls the same stream). Host, port and login come from the platform.
+starrocks_audit_table: "starrocks_audit_db__.starrocks_audit_tbl__"

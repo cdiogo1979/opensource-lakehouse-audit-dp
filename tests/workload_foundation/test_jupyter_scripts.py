@@ -99,7 +99,7 @@ def test_workflows_and_notebooks_live_in_matching_subproject_folders():
     workload = REPOSITORY_ROOT / "notebooks" / "workload"
     assert not list(workflows.glob("*.json")) and not list(workload.glob("*.py"))
     projects = {path.name for path in workflows.iterdir() if path.is_dir()}
-    assert projects <= {path.name for path in workload.iterdir() if path.is_dir()}
+    assert projects and projects <= {path.name for path in workload.iterdir() if path.is_dir()}
 
 
 def test_layer_folders_are_only_the_five_medallion_folders_one_level_deep():

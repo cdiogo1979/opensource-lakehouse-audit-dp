@@ -8,13 +8,31 @@ Signatures and purposes only. Business rules (masking grammar, category lists, i
 |---|---|---|---|
 | `tokenize(sql: str) -> list[Token]` | SQL text | tokens (`kind`, `text`) | Quote-, comment- and backtick-aware lexing; the base of every other function |
 | `mask_sql(sql: str \| None) -> str \| None` | SQL text | masked text | Replaces string, number, date and hex literals with `?` and collapses `IN (...)` lists to `IN (?)`; `None` stays `None` |
-| `statement_category(sql: str \| None) -> str` | SQL text | `SELECT`, `DML`, `DDL`, `ADMIN`, `OTHER` | Classifies by the leading keyword(s) after comments and `WITH` |
+| `statement_category(sql: str \| None) -> str \| None` | SQL text | `SELECT`, `DML`, `DDL`, `ADMIN`, `METADATA`, `SESSION`, `OTHER` | Classifies by the leading keyword(s) after comments and `WITH` (seven categories: Functional Design FD-Q1) |
 | `actor_type(user: str \| None) -> str` | StarRocks user | `person`, `product_writer`, `platform_service`, `unknown` | Separates people from `srv-<product>-writer`, `srv-starrocks`, `root` and other platform identities |
 | `referenced_tables(sql: str \| None, default_catalog: str \| None, default_database: str \| None) -> list[TableRef]` | SQL text and session context | `TableRef(catalog, database, table)` list, distinct | Tables after `FROM`, `JOIN`, `INTO`, `UPDATE`, `TABLE`, qualified with the session defaults; best effort |
 | `infer_scope(catalog: str \| None, database: str \| None) -> Scope` | a catalog and database | `Scope(data_product, environment)`, each possibly `None` | Maps `<token>_lh` / `_lhuat` / `_lhdev` and the catalogs `lakehouse` / `lakehouse_uat` / `lakehouse_dev` to product and environment |
+| `redact_credentials(sql: str \| None) -> str \| None` | SQL text | text with credentials as `'***'` | Passwords and secret-like property values (Functional Design FD-Q2) |
+| `event_scope(session: Scope, tables: list[Scope]) -> Scope` | scopes | event-level `Scope` | Attribution order for an event (FD-Q4) |
+| `payload_field(payload: dict, name: str) -> Any` | payload, field | value or `None` | Case- and underscore-insensitive key lookup |
+| `enrich_payload(query_id, event_time, payload, copied_at, copy_task) -> dict` | one bronze row | one silver row (dict) | The whole row transformation, pure; the notebook maps it over a batch |
 | `event_key(query_id: str \| None, payload: str) -> str` | AuditLoader `queryId` and the raw JSON | stable key | `query_id` when present, otherwise a SHA-256 of the canonical payload (connection events may lack a query ID) |
 
 Types: `Token`, `TableRef` and `Scope` are frozen dataclasses (or named tuples) defined in the module.
+
+## C6 `bronze/bronze_ingestion.py` (pull model, 2026-11-25)
+
+| Function | Purpose |
+|---|---|
+| `check_arguments(arguments) -> int` | `lookback_minutes`, 0 to 10080 (default 30) |
+| `staging_table(config) -> str` | Config `starrocks_audit_table` (default `starrocks_audit_db__.starrocks_audit_tbl__`), checked as `<database>.<table>` |
+| `bronze_watermark(spark, config) -> datetime \| None` | Newest bronze `event_time`; fails when bronze is missing |
+| `pull_query(table, since) -> (sql, parameters)` | `SELECT * ... WHERE \`timestamp\` >= %s ORDER BY \`timestamp\``, all rows when `since` is `None` |
+| `fetch_rows(connection, sql, parameters, size)` | Rows as dicts, `fetchmany(size)` at a time |
+| `ingest(spark, config, connection, lookback_minutes, now) -> dict` | Watermark, query, chunks of C1 `staging_to_bronze`, append |
+| `process(spark, config, lookback_minutes, connect) -> dict` | Opens `lakehouse_starrocks.connect()`, ingests, closes, logs |
+
+C1 adds `staging_to_bronze(row, copied_at, loader) -> tuple`: one staging row as one bronze tuple, statement redacted, payload canonical JSON.
 
 ## C2 `deploy/deploy_bronze_table.py`
 
@@ -29,10 +47,9 @@ Types: `Token`, `TableRef` and `Scope` are frozen dataclasses (or named tuples) 
 | Function | Purpose |
 |---|---|
 | `ensure_silver_tables(spark, config) -> None` | Creates `starrocks_audit_event` and `starrocks_audit_table_access` if missing |
-| `parse_payload(bronze_df) -> DataFrame` | JSON payload to typed columns (known AuditLoader fields; unknown fields stay only in `payload`) |
-| `enrich_events(parsed_df) -> DataFrame` | Adds `event_key`, `event_type`, `sql_masked`, `statement_category`, `actor_type`, `data_product`, `environment`, `event_date` through C1 UDFs |
-| `table_access_rows(enriched_df) -> DataFrame` | One row per event and referenced table |
-| `deduplicate(df, key_columns) -> DataFrame` | One row per key within a micro-batch (bronze holds overlap duplicates) |
+| `enriched_chunks(batch_df, size) -> Iterator[list[dict]]` | Reads the batch on the driver in chunks and applies C1's `enrich_payload` to each row (redaction, masking, category, actor, scope, key, `event_type`, `event_date`) |
+| `table_access_rows(events: list[dict]) -> list[dict]` | One row per event and referenced table |
+| `deduplicate(rows: list[dict], key_columns) -> list[dict]` | One row per key within a chunk, earliest `copied_at` kept (bronze holds overlap duplicates) |
 | `merge_batch(batch_df, batch_id) -> None` | `foreachBatch` sink: MERGE insert-if-absent into both silver tables |
 | `run(spark, config) -> None` | Builds the `availableNow` stream from bronze with the checkpoint and waits for it to finish |
 
