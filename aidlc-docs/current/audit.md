@@ -347,3 +347,43 @@ The complete audit history through intent `20261112-sample-dependency-alerts` is
 **Email**: cdiogo@gmail.com
 
 ---
+
+## Deploy Follow-up — re-apply and merge to uat
+**Timestamp**: 2026-11-25T22:50:00Z
+**User Input**: "i re-executed the audit yml but is waiting for the dag audit bundles" / "merged to uar"
+**AI Response**: "Confirmed Airflow restarted and registered the audit-main and audit-uat bundles (0 DAGs, 0 errors) while both branches only held workflows/.gitkeep. The user merged PR #1 into uat (3935df5); waiting for the bundle refresh to show audit-uat-starrocks_deploy and audit-uat-starrocks_audit. Advised keeping audit-uat-starrocks_audit paused until the paired platform intent delivers lakehouse_starrocks.connect() and the AuditLoader staging table; audit-uat-starrocks_deploy is safe to run. Dev validation (deploy step 6) skipped by the merge; remains to be done before main."
+**Context**: Deploy follow-up; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Deploy Follow-up — uat DAGs live, hourly load paused
+**Timestamp**: 2026-11-25T23:00:00Z
+**User Input**: "i paused the dag"
+**AI Response**: "Confirmed in Airflow: audit-uat-starrocks_audit paused=True; audit-uat-starrocks_deploy and audit-uat-deploy_materialized_views unpaused (bundle version 3935df5). The hourly load stays paused until the paired platform intent delivers the AuditLoader staging table, grants, lakehouse_starrocks.connect() and connectivity."
+**Context**: Deploy follow-up; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Deploy Follow-up — UAT bronze table created
+**Timestamp**: 2026-11-25T23:05:00Z
+**User Input**: "1 completed"
+**AI Response**: "Verified audit-uat-starrocks_deploy run manual__2026-11-25T18:54:34 state success; task log: Bronze table deploy result created, table lakehouse_uat.audit_lhuat.starrocks_audit_event_fe_brz, location s3a://bucket-audit-uat/lakehouse_uat/audit_lhuat/starrocks_audit_event_fe_brz. First platform-integration evidence (bundle, DAG factory, writer token, Polaris DDL) recorded in build-and-test-summary.md and deploy_instructions.md step 9."
+**Context**: Deploy follow-up; partial platform integration verified; intent closure on hold.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---
+
+## Change Request — disconnection events (from the paired platform intent)
+**Timestamp**: 2026-11-26T08:05:00Z
+**User Input**: "Fix disconnection first (Recommended)"
+**AI Response**: "The paired platform intent's probe P-1 found AuditLoader 5.0.0 on StarRocks 4.1.7 writes queryType 'connection' (login) and 'disconnection' (logout); live capture confirmed connection rows. Added event_type 'disconnection' (DISCONNECTION_MARKERS; _is_marked), so logouts are neither misread as queries nor counted as logins by mv_starrocks_login_day. BR-12, domain-entities.md and README updated; new test. pytest 261 passed; code_quality all PASS; validator OK. Committed and pushed for a pull request into uat, before the first real uat load."
+**Context**: Intent on hold at closure; change request ahead of the deploy validation.
+**User**: cdiogo1979
+**Email**: cdiogo@gmail.com
+
+---

@@ -62,7 +62,7 @@ Manual steps: 1 to 7, 9, 10, 12, 13. Automated once merged: Airflow bundle refre
 ### 8. (automatic) View deploy in UAT
 Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_views` task, which creates the five views in `audit_lhuat` as the writer. A view whose source table doesn't exist yet is skipped until a later run, so the views appear after the first silver run.
 
-### 9. Create the UAT bronze table
+### 9. Create the UAT bronze table — DONE 2026-11-25 (run `manual__2026-11-25T18:54:34`, result `created`)
 - **Execution**: trigger `audit-uat-starrocks_deploy`.
 - **Validation**: the task logs `"result": "created"`, and the table exists in `lakehouse_uat.audit_lhuat`.
 
@@ -96,5 +96,5 @@ Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_
 | Paired platform intent: steps 2 to 4 (step 1 applied, re-apply pending) | platform admin | Not started (blocker) |
 | Probe P-1: AuditLoader columns, connection events, FE time zone | platform admin | Open |
 | Airflow's pause default for new DAGs | platform admin | Unknown |
-| Re-apply `audit.yaml` (analysts `none` on prod) | platform admin | Needed before step 12 |
-| Step 5: branch pushed 2026-11-25; PR opened from the compare page | you | Branch pushed |
+| Step 5: branch pushed; PR #1 merged into `uat` 2026-11-25 (`3935df5`), before dev validation (step 6, still to do before `main`) | you | Done |
+| Re-apply of `audit.yaml` (analysts `none` on prod) | platform admin | Done 2026-11-25 (user) |

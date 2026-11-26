@@ -83,7 +83,7 @@ EVENT_KEY_COLUMNS = ("event_key", "event_date")
 TABLE_ACCESS_KEY_COLUMNS = ("event_key", "ref_catalog", "ref_database", "ref_table", "event_date")
 
 CATEGORIES = ("SELECT", "DML", "DDL", "ADMIN", "METADATA", "SESSION", "OTHER")
-EVENT_TYPES = ("query", "connection", "unparsed")
+EVENT_TYPES = ("query", "connection", "disconnection", "unparsed")
 ACTOR_TYPES = ("person", "product_writer", "platform_service", "unknown")
 SLOW_QUERY_MS = 60_000  # BR-42
 REDACTED = "'***'"
@@ -91,9 +91,10 @@ DEFAULT_CATALOG = "default_catalog"
 # The StarRocks staging table the AuditLoader plugin writes to (platform); read by the bronze task.
 STAGING_TABLE = "starrocks_audit_db__.starrocks_audit_tbl__"
 
-# BR-12: how a payload marks a connection event. Confirmed against StarRocks 4.1.7 by the
-# paired platform intent (probe P-1); change here only.
+# BR-12: how a payload marks a login (connection) or a logout (disconnection). AuditLoader 5.0.0 on
+# StarRocks 4.1.7 writes queryType "connection" or "disconnection" (paired platform intent, probe P-1).
 CONNECTION_MARKERS = {"eventtype": ("CONNECTION",), "type": ("CONNECTION",), "querytype": ("CONNECTION",)}
+DISCONNECTION_MARKERS = {"eventtype": ("DISCONNECTION",), "type": ("DISCONNECTION",), "querytype": ("DISCONNECTION",)}
 
 
 # --- Tokens ---------------------------------------------------------------------------
@@ -718,8 +719,8 @@ def utc_naive(value: Any) -> Optional[datetime]:
     return utc_naive(parsed)
 
 
-def _is_connection(fields: Mapping) -> bool:
-    for name, markers in CONNECTION_MARKERS.items():
+def _is_marked(fields: Mapping, marker_table: Mapping) -> bool:
+    for name, markers in marker_table.items():
         value = fields.get(name)
         if value is not None and str(value).strip().upper() in markers:
             return True
@@ -771,7 +772,7 @@ def enrich_payload(query_id: Any, event_time: Any, payload: Any, copied_at: Any,
     if unparsed:
         row["event_type"] = "unparsed"
         return row
-    event_type = "connection" if _is_connection(fields) else "query"
+    event_type = "connection" if _is_marked(fields, CONNECTION_MARKERS) else "disconnection" if _is_marked(fields, DISCONNECTION_MARKERS) else "query"
     sql_text = redact_credentials(statement)
     category = statement_category(sql_text) if event_type == "query" and sql_text is not None else None
     catalog, database = _text(fields.get("catalog")), _text(fields.get("db"))

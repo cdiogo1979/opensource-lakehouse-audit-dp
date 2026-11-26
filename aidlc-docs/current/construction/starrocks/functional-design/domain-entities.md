@@ -30,7 +30,7 @@ One row per audit event. Partitioned by `event_date` (identity; BR-41). Insert-o
 | Column | Type | Null | Source / rule |
 |---|---|---|---|
 | `event_key` | string | no | BR-31 |
-| `event_type` | string | no | `query`, `connection`, `unparsed` (BR-12, BR-14) |
+| `event_type` | string | no | `query`, `connection`, `disconnection`, `unparsed` (BR-12, BR-14) |
 | `event_time` | timestamp | no | payload `timestamp`; bronze `event_time` when absent |
 | `event_date` | date | no | `DATE(event_time)` (UTC) |
 | `user` | string | yes | payload `user`, normalized (BR-6) |
