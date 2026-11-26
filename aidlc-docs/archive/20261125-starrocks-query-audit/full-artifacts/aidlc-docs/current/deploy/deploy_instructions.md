@@ -98,3 +98,9 @@ Every run of an `audit-uat` DAG starts with the platform's `deploy_materialized_
 | Airflow's pause default for new DAGs | platform admin | Unknown |
 | Step 5: branch pushed; PR #1 merged into `uat` 2026-11-25 (`3935df5`), before dev validation (step 6, still to do before `main`) | you | Done |
 | Re-apply of `audit.yaml` (analysts `none` on prod) | platform admin | Done 2026-11-25 (user) |
+
+## Execution record (2026-11-26)
+- Steps 1 to 4 (platform): done by the paired intent `20261125-starrocks-audit-capture` (closed); `audit.yaml` re-applied with analysts `none`.
+- Steps 5, 7, 9, 10: PRs #1 and #2 merged into `uat`; `audit-uat-starrocks_deploy` created bronze; `audit-uat-starrocks_audit` loads hourly (verified).
+- Step 6 (dev validation): Jupyter connection verified by the user; the dev notebooks themselves not run (same code verified in uat and production).
+- Steps 11, 12: PR #3 merged into `main`; `audit-main-starrocks_deploy` created bronze; `audit-main-starrocks_audit` succeeded (1068 events); analyst access limited to the views.
