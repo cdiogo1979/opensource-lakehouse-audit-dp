@@ -3,7 +3,7 @@
 ## Project Information
 - Project Type: Brownfield
 - Start Date: 2026-11-25T17:17:31Z
-- Current Stage: Intent closure ON HOLD: waiting for the paired platform intent; then run deploy_instructions steps 6 and 10 and close with verification passed (user decision 2026-11-25, no waiver)
+- Current Stage: Intent closure (compaction); verification passed (uat and production 2026-11-26)
 - Intent: Build the first source of the audit and observability data product: every query executed in StarRocks captured, stored as Iceberg tables in the audit product's namespaces, and made queryable.
 - Intent ID: 20261125-starrocks-query-audit
 - Previous Intent: aidlc-docs/archive/20261112-sample-dependency-alerts (closed in the template repository `opensource-lakehouse-sample-dp`; its archive was removed from this working tree)
@@ -59,11 +59,13 @@
 <!-- intent-lifecycle:start -->
 ```json
 {
+  "archive": "aidlc-docs/archive/20261125-starrocks-query-audit",
   "current_stage": "DEPLOY - Deploy",
   "intent_id": "20261125-starrocks-query-audit",
   "name": "StarRocks Query Audit",
   "previous_intent": "aidlc-docs/archive/20261112-sample-dependency-alerts",
-  "status": "ACTIVE"
+  "status": "CLOSED",
+  "summary": "aidlc-docs/archive/20261125-starrocks-query-audit/intent-summary.md"
 }
 ```
 <!-- intent-lifecycle:end -->

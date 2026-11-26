@@ -1,6 +1,6 @@
 # Functional Design — CI and Deployment (Jenkins and Airflow bundles)
 
-How changes are checked and reach Airflow. Architecture: [`../application-design.md`](../application-design.md). Replaces the retired design (three `lakehouse-*` bundles, the bundle client).
+How changes are checked and reach Airflow. Architecture: [`../application-design.md`](../application-design.md). Replaces the retired design (three `lakehouse-*` bundles, the bundle client). For this repository the product is `audit`.
 
 ## Airflow bundles (platform-owned)
 - Each data product with a `repo` gets two Git bundles: `<product>-main` tracks the prod branch (`main`) and `<product>-uat` tracks `uat` (refresh every 300 s, sparse `dags`, `workflows`, `notebooks`, `configs`, root files included). DAG IDs are `<bundle>-<name>`; `dev` has no bundle (Jupyter only).
@@ -15,4 +15,4 @@ How changes are checked and reach Airflow. Architecture: [`../application-design
 `.venv/bin/python -m compileall -q dags notebooks`, `PATH=".venv/bin:$PATH" scripts/code_quality.sh all`, `.venv/bin/python -m pytest -q`; the validator with a platform checkout: `PYTHONPATH=<platform>/infra/airflow python3 -m lakehouse_dags.validate .`. A `.venv` created before the repository rename keeps scripts pointing at the old path: recreate it.
 
 ## Verification
-2026-11-11: `default_cd` on the `tpch-medallion` pull request SUCCESS; UAT `default-uat-tpch_medallion` 21/21.
+2026-11-26: PRs #1 and #2 into `uat` and #3 into `main` of this repository; `audit-uat-starrocks_audit` and `audit-main-starrocks_audit` run hourly; the platform deployed the five `mv_starrocks_*` views in `audit_lhuat` and `audit_lh` as `srv-audit-writer`. The bundles are `audit-main` and `audit-uat`; the Jenkins folder is `audit` (`audit_ci`, `audit_cd`).

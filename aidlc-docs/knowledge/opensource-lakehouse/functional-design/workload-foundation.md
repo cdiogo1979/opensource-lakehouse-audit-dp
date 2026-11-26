@@ -17,11 +17,11 @@ The shared helpers in `notebooks/common/`, used by every subproject in Airflow r
 ## Jupyter scripts (`%run`)
 - `jupyter_environment_resolver.py`: finds the clone that holds the notebook (`notebooks/common/job_runtime.py` marker), names the application `<env>-<notebook>`, and defines `spark` and `config` in the notebook.
 
-## Sample workloads (`notebooks/workload/sample/other/`)
-`test_environment.py` (creates the smoke table twice), `count_sample_rows.py` (counts it), `generate_tpch.py` (DuckDB TPC-H generation with row-count checks); workflows `workflows/sample/test_environment.json` and `generate_tpch.json`.
+## `audit_sql.py` (shared audit logic, since 2026-11-25)
+Pure-Python, standard-library functions used by the `starrocks` notebooks and meant for later audit sources: a lossless SQL tokenizer, credential redaction, literal masking, statement categories, actor types, product and environment scope, referenced tables, event keys, `staging_to_bronze` and `enrich_payload`, and the bronze and silver column contracts. Rules: [`../../starrocks/functional-design/query-audit.md`](../../starrocks/functional-design/query-audit.md).
 
 ## Failure behavior
 Config, argument, import, catalog or storage failures fail the task with the message in the (redacted) task log; in Jupyter they raise in the cell. Nothing falls back to another environment or identity.
 
 ## Verification
-`tests/workload_foundation/` (config loader, CLI, task arguments, job runtime, Jupyter scripts, notebook structure, product bundles, properties). Latest: 2026-11-11, 112 passed with the `tpch` suite (2 DuckDB skips locally; DuckDB tests pass in the Spark runtime image and in Jenkins).
+`tests/workload_foundation/` (config loader, CLI, task arguments, job runtime, Jupyter scripts, notebook structure, product bundles, properties) and `tests/starrocks/`. Latest: 2026-11-26, 261 passed.
